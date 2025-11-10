@@ -1,0 +1,4 @@
+# ... otras dependencias
+antlr4-python3-runtime
+google-genai
+python-dotenv

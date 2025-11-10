@@ -1,0 +1,15 @@
+// Algoritmo para sumar los elementos de un arreglo A de tamaño n
+ALGORITMO_SUMA(A[n])
+begin
+    // Declaración de variables locales
+    total 🡨 0;
+    
+    // El ciclo FOR se ejecuta n veces
+    for i 🡨 1 to n do 
+    begin
+        // Operación O(1) dentro del ciclo
+        total 🡨 total + A[i]; 
+    end
+    
+    return total;
+end
