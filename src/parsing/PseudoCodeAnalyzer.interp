@@ -17,7 +17,7 @@ null
 'else'
 'do'
 'CALL'
-'🡨'
+'<-'
 null
 '+'
 '-'

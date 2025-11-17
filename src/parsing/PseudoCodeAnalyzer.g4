@@ -26,8 +26,8 @@ DO: 'do';
 CALL: 'CALL';
 
 // Asignación y Comentarios
-ASSIGN: '🡨';
-COMMENT: '►' ~[\r\n]* -> skip; 
+ASSIGN: '<-'; // Cambiado de '🡨'
+COMMENT: '//' ~[\r\n]* -> skip; // Cambiado de '►'
 
 // Operadores Matemáticos
 OP_ADD: '+';

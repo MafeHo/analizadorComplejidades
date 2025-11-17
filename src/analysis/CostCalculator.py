@@ -1,42 +1,112 @@
-# src/analysis/CostCalculator.py
+# src/analysis/CostCalculator.py (Versión con RECURSIÓN CORREGIDA FINAL)
 
 from ..parsing.PseudoCodeAnalyzerVisitor import PseudoCodeAnalyzerVisitor
 from ..parsing.PseudoCodeAnalyzerParser import PseudoCodeAnalyzerParser
 from ..llm_integration.LLM_Client import LLMClient
 
-# Una clase para contener el resultado del análisis
+# (Clase AnalysisResult se mantiene igual)
 class AnalysisResult:
-    def __init__(self, worst_case=None, best_case=None, avg_case=None, reasoning=""):
-        self.worst_case = worst_case # Notación O
-        self.best_case = best_case   # Notación Omega (Ω)
-        self.avg_case = avg_case     # Notación Theta (Θ)
+    def __init__(self, worst_case=None, best_case=None, avg_case=None, line_analysis=None, reasoning=""):
+        self.worst_case = worst_case
+        self.best_case = best_case
+        self.avg_case = avg_case
         self.reasoning = reasoning
+        self.line_analysis = line_analysis if line_analysis else []
 
 class CostCalculator(PseudoCodeAnalyzerVisitor):
     def __init__(self, llm_client):
-        # Almacena el cliente LLM para resolver sumatorias/recurrencias
         self.llm_client = llm_client 
-        self.cost_map = {}  # Mapea IDs de subrutinas a su complejidad T(n)
-        self.current_T_n = "1" # Costo de la línea actual
-        self.algorithm_definitions = {} # Para almacenar el pseudocódigo de cada subrutina
+        self.cost_map = {}
+        self.current_algorithm_name = None 
+        self.is_recursive = False
+        self.line_logs = []
+
+    def _log_step(self, ctx, cost):
+        line_num = ctx.start.line
+        # Obtenemos el texto original de la línea (limpiando espacios)
+        text = ctx.getText() # Esto puede ser sucio, mejor tomamos solo un ID visual
+        # Nota: ANTLR a veces junta todo el texto. Para el reporte, usaremos el número de línea.
+        self.line_logs.append({
+            "line": line_num,
+            "cost": str(cost)
+        })
 
     # -------------------------------------------------------------
-    # Método Principal (Subrutinas)
+    # MÉTODO RAÍZ (PROGRAM)
+    # -------------------------------------------------------------
+    def visitProgram(self, ctx:PseudoCodeAnalyzerParser.ProgramContext):
+        final_cost = "0"
+        if ctx.subroutine_declaration(0):
+            #return self.visit(ctx.subroutine_declaration(0))
+            final_cost = self.visit(ctx.subroutine_declaration(0)).worst_case
+        return AnalysisResult(worst_case=final_cost, line_analysis=self.line_logs)
+       # return AnalysisResult(worst_case="ERROR: No se encontró subrutina")
+
+    # -------------------------------------------------------------
+    # MÉTODO PRINCIPAL (SUBRUTINA)
     # -------------------------------------------------------------
     def visitSubroutine_declaration(self, ctx:PseudoCodeAnalyzerParser.Subroutine_declarationContext):
-        # 1. Obtener el nombre del algoritmo (ej. 'MergeSort')
-        algo_name = ctx.ID(0).getText()
         
-        # 2. Calcular el costo total T(n) del cuerpo del algoritmo
-        # La visita a statement_list devolverá la suma total de costos del cuerpo
-        body_cost = self.visit(ctx.statement_list()) 
+        self.current_algorithm_name = ctx.ID().getText()
+        self.is_recursive = False
+        print(f"  > Analizando subrutina: {self.current_algorithm_name}")
+        
+        body_cost_str = "0"
+        if ctx.statement_list(): 
+            body_cost_str = self.visit(ctx.statement_list())
+            
+        #else:
+         #   print(f"  > ERROR: No se pudo parsear el cuerpo de '{self.current_algorithm_name}'.")
+          #  body_cost_str = "ERROR_PARSING"
 
-        # 3. Almacenar el resultado (Simplificado, la lógica real es más compleja)
-        # Aquí se debería llamar a un simplificador para obtener O, Ω, Θ
-        self.cost_map[algo_name] = body_cost 
-        print(f"Algoritmo {algo_name} tiene un costo T(n) preliminar: {body_cost}")
+        final_cost_description = ""
         
-        return AnalysisResult(worst_case=body_cost) # Devuelve un objeto resultado
+        """if self.is_recursive:
+            # Si se detectó recursión, el 'body_cost_str' es la
+            # función de costo del IF/ELSE, ej: ( 1 + max(1, T((n - 1))) )
+            
+            # Simplificamos para el LLM: T(n) = T(n-k) + f(n)
+            recursive_term = ""
+            if "T(" in body_cost_str:
+                start = body_cost_str.find("T(")
+                end = body_cost_str.find(")", start) + 1
+                recursive_term = body_cost_str[start:end] # ej. T((n - 1))
+            
+            # El costo del trabajo 'f(n)' es el resto (simplificado a '1' (O(1)))
+            fn_cost = "1" 
+
+            recurrence_relation = f"T(n) = {recursive_term} + {fn_cost}"""
+        
+        if self.is_recursive:
+            # body_cost_str ahora es la expresión de costo completa del 
+            # if/else, ej: "( 1 + max(1, T((n - 1))) )"
+            
+            # --- INICIO DE LA CORRECCIÓN ---
+            # No simplificamos manualmente. Enviamos la expresión completa
+            # que el visitador ya calculó. El LLM interpretará 
+            # la recurrencia y el costo constante f(n) desde aquí.
+            
+            recurrence_relation = f"T(n) = {body_cost_str}"
+            # --- FIN DE LA CORRECCIÓN ---
+            
+            print(f"  > Relación de Recurrencia detectada: {recurrence_relation}")
+            print("  > Solicitando resolución de recurrencia al LLM...")
+            
+            llm_response = self.llm_client.solve_equation(
+                "relación de recurrencia", 
+                recurrence_relation
+            )
+            final_cost_description = llm_response
+            
+        else:
+            # Si NO es recursivo
+            print(f"  > Costo Iterativo (T(n)): {body_cost_str}")
+            final_cost_description = body_cost_str
+
+        self.current_algorithm_name = None
+        
+        print(f"  > Costo T(n) preliminar para {ctx.ID().getText()}: {final_cost_description}")
+        return AnalysisResult(worst_case=final_cost_description)
 
     # -------------------------------------------------------------
     # Manejo de Bloques de Sentencias (Suma de Costos)
@@ -44,99 +114,159 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
     def visitStatement_list(self, ctx:PseudoCodeAnalyzerParser.Statement_listContext):
         total_cost = []
         for statement_ctx in ctx.statement():
-            # Cada visita devuelve el costo de esa sentencia
             costo_sentencia = self.visit(statement_ctx)
             total_cost.append(str(costo_sentencia))
             
-        # Retorna la representación simbólica de la suma de costos
+        if not total_cost:
+            return 0
+        
         return " + ".join(total_cost)
 
     # -------------------------------------------------------------
     # Sentencias O(1)
     # -------------------------------------------------------------
     def visitAssignment(self, ctx:PseudoCodeAnalyzerParser.AssignmentContext):
-        # Asignaciones, operaciones aritméticas, accesos a arreglos/objetos son O(1)
-        # El costo es 1 unidad de tiempo.
-        return 1
+        # El costo de la asignación es 1 (para la asignación en sí)
+        # MÁS el costo de la expresión que se está asignando.
+        cost_of_expression = self.visit(ctx.expression())
+        
+        # Si la expresión es recursiva (ej. T(n-1)), solo propagamos ese costo.
+        if "T(" in str(cost_of_expression):
+             return cost_of_expression
+             
+        # Si la expresión es un número (ej. 1), el costo es 1 (asignación) + 0 (evaluación)
+        if str(cost_of_expression).isdigit():
+             return 1
+             
+        # Si es una expresión aritmética (ej. n * 2), el costo es 1 + costo(expresión)
+        return f"(1 + {cost_of_expression})"
+    
+
 
     # -------------------------------------------------------------
     # Control de Flujo (IF/ELSE)
     # -------------------------------------------------------------
     def visitIf_statement(self, ctx:PseudoCodeAnalyzerParser.If_statementContext):
-        # 1. Costo de la condición (asumimos O(1) por ahora)
-        cost_condition = 1
-        
-        # 2. Costo del bloque THEN (Bloque obligatorio)
+        cost_condition = "1"
         cost_then = self.visit(ctx.statement_list(0))
-        
-        # 3. Costo del bloque ELSE (Bloque opcional)
-        cost_else = 0
+        cost_else = "0"
         if ctx.ELSE():
             cost_else = self.visit(ctx.statement_list(1))
             
-        # Peor caso (O): Costo de la condición + el camino más caro
-        worst_case = f"{cost_condition} + max({cost_then}, {cost_else})"
-        
-        # Mejor caso (Ω): Costo de la condición + el camino menos caro
-        best_case = f"{cost_condition} + min({cost_then}, {cost_else})"
-        
-        # Para el cálculo posterior de O, Ω, Θ, retornamos la estructura
-        return {"O": worst_case, "Ω": best_case}
+        # Devolvemos el peor caso
+        return f"( {cost_condition} + max({cost_then}, {cost_else}) )"
 
+
+    # src/analysis/CostCalculator.py
 
     # -------------------------------------------------------------
     # Control de Flujo (FOR Loop)
     # -------------------------------------------------------------
     def visitFor_loop(self, ctx:PseudoCodeAnalyzerParser.For_loopContext):
-        # Asumimos que podemos obtener los límites y el cuerpo ya tiene un costo C.
-        
-        # 1. Obtener límites (Simplificado: n es el límite superior)
-        start_expr = self.visit(ctx.expression(0)) # Expresión de inicio
-        end_expr = self.visit(ctx.expression(1))   # Expresión de límite
-        
-        # 2. Costo del cuerpo del loop
-        cost_body = self.visit(ctx.statement_list(0))
-        
-        # 3. Plantear la sumatoria simbólica 
-        # Ejemplo de sumatoria que el LLM debe resolver:
+        start_expr = self.visit(ctx.expression(0)) # ej. 1
+        end_expr = self.visit(ctx.expression(1))   # ej. (n - 1) o (n - i)
+        cost_body = self.visit(ctx.statement_list()) # ej. O(1) o Theta(n-i)
+
+        loop_var = ctx.ID().getText() # ej. i o j
+
+        # --- INICIO DE LA CORRECCIÓN ---
+        # El prompt ahora es consciente del contexto.
+        # Informamos al LLM sobre la variable de entrada 'n' y
+        # le pedimos que resuelva la sumatoria tal como está.
+
         summation_expression = (
-            f"Resolver la sumatoria: Sumatoria desde i = {start_expr} hasta {end_expr} "
-            f"del costo total: ({cost_body}). Asume que el límite superior 'n' es la entrada."
+        f"Por favor, resuelve la siguiente sumatoria y dame la complejidad asintótica (Theta, O, o Omega) "
+        f"simplificada.\n\n"
+        f"Sumatoria desde {loop_var} = {start_expr} hasta {end_expr} de [ {cost_body} ]\n\n"
+        f"Considera 'n' como la variable de tamaño de entrada principal. "
+        f"Otras variables (como 'i', si aparecen en los límites o el cuerpo) "
+        f"deben ser tratadas como variables de un ciclo externo."
         )
 
-        # 4. Llamar al LLM para resolver la sumatoria (EL TRABAJO DURO)
-        print("  > Solicitando resolución de sumatoria al LLM...")
+        print(f"> Solicitando resolución de sumatoria al LLM (Límites: {loop_var}={start_expr} a {end_expr})...")
         llm_response = self.llm_client.solve_equation("sumatoria", summation_expression)
-        
-        # 5. Se debe analizar la respuesta del LLM para extraer O, Ω, Θ.
-        # Por simplicidad, retornamos la respuesta bruta del LLM para el costo T(n)
-        return llm_response
 
-    # Implementar de forma similar: visitWhile_loop y visitRepeat_loop
-    # La dificultad aquí es determinar la condición de terminación, que a menudo requiere 
-    # inferencia semántica compleja que el LLM podría asistir.
-    
+        #pa la tabla con los costos por línea
+        self._log_step(ctx, llm_response)
+
+        # Con la nueva instrucción de sistema, llm_response será una cadena limpia
+        #section: # (ej. "Theta(n^2)") y no contaminará prompts futuros
+        return llm_response
+        # --- FIN DE LA CORRECCIÓN ---
+
     # -------------------------------------------------------------
-    # Control de Flujo (Llamadas: Recursión/Subrutinas)
+    # LLAMADA A SUBRUTINA (Statement)
     # -------------------------------------------------------------
     def visitCall_statement(self, ctx:PseudoCodeAnalyzerParser.Call_statementContext):
         called_name = ctx.ID().getText()
-        
-        # Lógica para identificar la recurrencia: 
-        # Si 'called_name' es el mismo que el algoritmo actual, ¡es recursión!
-        # Aquí la lógica real debe ser más sofisticada, pero simplificamos para el ejemplo.
-        
-        # Si es una llamada a sí mismo y tiene una división en el problema (ej. n/2),
-        # Se plantea la Relación de Recurrencia
-        
-        # Ejemplo de Relación de Recurrencia que el LLM debe resolver:
-        recurrence_relation = (
-            "Resolver la siguiente relación de recurrencia usando el Teorema Maestro o "
-            "sustitución: T(n) = 2*T(n/2) + n."
-        )
+        print(f"  > (Llamada a subrutina externa: {called_name})")
+        return self.cost_map.get(called_name, "1") # Asumir O(1)
 
-        # 4. Llamar al LLM para resolver la recurrencia (EL TRABAJO DURO)
-        print("  > Solicitando resolución de recurrencia al LLM...")
-        llm_response = self.llm_client.solve_equation("relación de recurrencia", recurrence_relation)
+    
+    # -------------------------------------------------------------
+    # MÉTODOS DE EXPRESIÓN (¡LÓGICA DE RECURSIÓN CORREGIDA!)
+    # -------------------------------------------------------------
+
+    # -------------------------------------------------------------
+    # MÉTODOS DE EXPRESIÓN (¡CORREGIDO PARA MÚLTIPLES RECURSIONES!)
+    # -------------------------------------------------------------
+
+    def visitVariable(self, ctx:PseudoCodeAnalyzerParser.VariableContext):
+        return ctx.getText()
+
+    def visitExpression(self, ctx:PseudoCodeAnalyzerParser.ExpressionContext):
         
-        return llm_response
+        # --- 1. LÓGICA DE RECURSIÓN (Función) ---
+        # Es una llamada ID(expression), ej: FACTORIAL(n-1)
+        if ctx.ID() and ctx.LPAREN():
+            function_name = ctx.ID().getText()
+            
+            if function_name == self.current_algorithm_name:
+                # ¡RECURSIÓN DETECTADA!
+                print(f"  > ¡Recursión detectada!: {function_name}")
+                self.is_recursive = True
+                
+                param_str = "n"
+                if ctx.expression(0):
+                    param_str = self.visit(ctx.expression(0)) # ej. (n - 1)
+                
+                # Devolver el T(n) simbólico
+                return f"T({param_str})"
+            else:
+                # Es una llamada a función externa (ej. length(A))
+                return "1" # Asumir O(1)
+
+        # --- 2. Paréntesis (expr) ---
+        if ctx.LPAREN() and len(ctx.expression()) == 1:
+            return self.visit(ctx.expression(0))
+            
+        # --- 3. Terminales (NUMBER, variable) ---
+        if ctx.NUMBER():
+            return ctx.NUMBER().getText()
+        if ctx.variable():
+            return self.visit(ctx.variable())
+                
+        # --- 4. Operaciones Aritméticas (Suma, Resta, Mul, etc.) ---
+        if len(ctx.expression()) == 2:
+            left = self.visit(ctx.expression(0))
+            right = self.visit(ctx.expression(1))
+            
+            # Determinamos el operador
+            op = "+" # default
+            if ctx.OP_MUL(): op = "*"
+            elif ctx.OP_DIV_REAL() or ctx.OP_DIV_ENTERA(): op = "/"
+            elif ctx.OP_SUB(): op = "-"
+            elif ctx.OP_MOD(): op = "%"
+            # Si es ADD o cualquier otro, se queda como "+"
+
+            # --- CORRECCIÓN ---
+            # Antes descartábamos 'right' si 'left' tenía T(). 
+            # Ahora construimos la cadena completa para que el LLM vea todo.
+            # ej: "T(n-1) + 1 + T(n-1)"
+            
+            return f"({left} {op} {right})"
+        
+        # --- 5. Fallback ---
+        return ctx.getText()
+        
+        
