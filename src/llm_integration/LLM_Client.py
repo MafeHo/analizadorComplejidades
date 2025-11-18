@@ -63,13 +63,26 @@ class LLMClient:
         )
         return self._send_prompt(prompt)
 
-    def validate_complexity(self, algorithm_pseudocode: str) -> str:
-        """Valida la complejidad del algoritmo completo (Fase de Comparación)."""
+    """def validate_complexity(self, algorithm_pseudocode: str) -> str:
+        Valida la complejidad del algoritmo completo (Fase de Comparación).
         prompt = (
             "Analiza el siguiente pseudocódigo completo y dame su complejidad asintótica "
             "(O, Ω, y Θ) en función de n, junto con una justificación de las cotas fuertes. "
             "Pseudocódigo:\n\n"
             f"```pseudocode\n{algorithm_pseudocode}\n```"
+        )
+        return self._send_prompt(prompt)"""
+
+    def validate_complexity(self, algorithm_pseudocode: str) -> str:
+        """Valida la complejidad del algoritmo completo (Fase de Comparación)."""
+        prompt = (
+            "Analiza el siguiente pseudocódigo completo. "
+            "1. Identifica si es iterativo o recursivo.\n"
+            "2. Si es recursivo, extrae la Ecuación de Recurrencia y DIME QUÉ MÉTODO USAS para resolverla "
+            "(ej. 'Usando el Teorema Maestro caso 2...', 'Usando Ecuación Característica...', 'Usando Método de Iteración...').\n"
+            "3. Si es iterativo, explica las sumatorias.\n"
+            "4. Dame la complejidad final (O, Ω, y Θ).\n\n"
+            f"Pseudocódigo:\n```pseudocode\n{algorithm_pseudocode}\n```"
         )
         return self._send_prompt(prompt)
 
