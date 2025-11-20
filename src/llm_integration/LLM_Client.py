@@ -126,3 +126,48 @@ class LLMClient:
             
         except Exception as e:
             return f"Error generando el diagrama de seguimiento: {e}"
+        
+    # --- Agrega esto en src/llm_integration/LLM_Client.py ---
+
+# src/llm_integration/LLM_Client.py
+
+    def translate_to_pseudocode(self, natural_language_text: str) -> str:
+        """
+        Traduce descripción en lenguaje natural a pseudocódigo estructurado
+        con formato estricto (Newlines y Sintaxis).
+        """
+        grammar_rules = (
+            "Reglas de Sintaxis y FORMATO OBLIGATORIAS (Cúmplelas al 100%):\n"
+            "1. CICLO FOR: La sintaxis es 'for variable <- inicio to fin do'.\n"
+            "   -> ¡PROHIBIDO usar 'from'! (Incorrecto: 'for i from 1').\n"
+            "   -> Usa '<-' para asignar el inicio.\n"
+            "2. DEFINICIÓN: Escribe solo el nombre y parámetros. NO pongas 'Algoritmo' ni 'Function' antes.\n"
+            "   -> Incorrecto: 'Algoritmo Suma(n)'\n"
+            "   -> Correcto: 'Suma(n)'\n"
+            "3. ESTRUCTURA: Coloca 'begin' SIEMPRE en una línea nueva.\n"
+            "4. TERMINADORES: Cada sentencia simple debe terminar con punto y coma ';'.\n"
+            "5. ASIGNACIÓN: Usa siempre '<-' (Ej: x <- 0;).\n"
+            "6. BLOQUES: Usa 'begin' y 'end;' (No uses 'end for')."
+        )
+
+        prompt = (
+            f"Actúa como un transpilador riguroso. Convierte esta descripción a tu sintaxis específica:\n"
+            f"\"{natural_language_text}\"\n\n"
+            f"Aplica estas reglas estrictas:\n{grammar_rules}\n\n"
+            f"Salida: Solo el código."
+        )
+
+        try:
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt
+            )
+            
+            code = response.text.replace("```pseudocode", "").replace("```", "").strip()
+            
+            if response.usage_metadata:
+                self.total_tokens_used += response.usage_metadata.total_token_count
+            
+            return code
+        except Exception as e:
+            return f"// Error: {e}"
