@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai.errors import APIError
+import time
 
 class LLMClient:
     def __init__(self):
@@ -54,14 +55,51 @@ class LLMClient:
             return f"Error de API del LLM: {e}"
         except Exception as e:
             return f"Error desconocido al llamar al LLM: {e}"
-
-    def solve_equation(self, equation_type: str, expression: str) -> str:
-        """Resuelve sumatorias o recurrencias complejas (El 'trabajo duro')."""
+        
+    #original method commented out
+    """def solve_equation(self, equation_type: str, expression: str) -> str:
+        Resuelve sumatorias o recurrencias complejas (El 'trabajo duro').
         prompt = (
             f"Por favor, resuelve la siguiente {equation_type} y exprésala en "
             f"la notación de complejidad asintótica (O, Ω, Θ): \n\n{expression}"
         )
-        return self._send_prompt(prompt)
+        return self._send_prompt(prompt)"""
+    
+    #prueba
+    def solve_equation(self, equation_type: str, equation: str) -> str:
+        prompt = (
+            f"Actúa como un matemático experto. Resuelve esto para análisis de algoritmos:\n"
+            f"Tipo: {equation_type}\n"
+            f"Ecuación/Código: {equation}\n\n"
+            f"Tu tarea: Dar SOLO la complejidad asintótica final simplificada (ej. Theta(n^2), O(log n)). "
+            f"Sin explicaciones, solo la notación matemática."
+        )
+        
+        # --- Lógica de Reintento (Retry Logic) ---
+        max_retries = 3
+        wait_time = 2 # Segundos iniciales
+        
+        for attempt in range(max_retries):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt
+                )
+                
+                if response.usage_metadata:
+                    self.total_tokens_used += response.usage_metadata.total_token_count
+                    
+                return response.text.strip()
+                
+            except Exception as e:
+                print(f"  ⚠️ Error API (Intento {attempt+1}/{max_retries}): {e}")
+                if "503" in str(e) or "429" in str(e):
+                    time.sleep(wait_time)
+                    wait_time *= 2 # Exponential backoff (esperar el doble cada vez)
+                else:
+                    return f"Error: {e}"
+        
+        return "Error: API sobrecargada después de varios intentos."
 
     """def validate_complexity(self, algorithm_pseudocode: str) -> str:
         Valida la complejidad del algoritmo completo (Fase de Comparación).
