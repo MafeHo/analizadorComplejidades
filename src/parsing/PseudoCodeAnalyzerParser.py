@@ -1,4 +1,4 @@
-# Generated from src/parsing/PseudoCodeAnalyzer.g4 by ANTLR 4.13.2
+# Generated from PseudoCodeAnalyzer.g4 by ANTLR 4.13.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,48,266,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,48,274,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,1,0,1,0,4,0,33,8,0,11,0,12,0,34,1,0,1,0,1,1,1,1,1,1,1,
         1,1,1,5,1,44,8,1,10,1,12,1,47,9,1,1,1,1,1,1,2,1,2,1,2,1,2,1,2,1,
@@ -27,19 +27,20 @@ def serializedATN():
         1,12,1,12,1,12,1,12,3,12,194,8,12,1,13,1,13,1,13,1,13,1,13,1,13,
         5,13,202,8,13,10,13,12,13,205,9,13,3,13,207,8,13,1,13,1,13,1,14,
         1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,
-        1,14,1,14,1,14,1,14,1,14,1,14,1,14,3,14,232,8,14,1,14,1,14,1,14,
+        1,14,1,14,5,14,227,8,14,10,14,12,14,230,9,14,3,14,232,8,14,1,14,
+        1,14,1,14,1,14,1,14,1,14,3,14,240,8,14,1,14,1,14,1,14,1,14,1,14,
         1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,
-        1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,5,14,261,
-        8,14,10,14,12,14,264,9,14,1,14,0,1,28,15,0,2,4,6,8,10,12,14,16,18,
-        20,22,24,26,28,0,1,1,0,29,34,294,0,32,1,0,0,0,2,38,1,0,0,0,4,75,
-        1,0,0,0,6,77,1,0,0,0,8,116,1,0,0,0,10,123,1,0,0,0,12,132,1,0,0,0,
-        14,134,1,0,0,0,16,151,1,0,0,0,18,153,1,0,0,0,20,164,1,0,0,0,22,173,
-        1,0,0,0,24,180,1,0,0,0,26,195,1,0,0,0,28,231,1,0,0,0,30,33,3,2,1,
-        0,31,33,3,6,3,0,32,30,1,0,0,0,32,31,1,0,0,0,33,34,1,0,0,0,34,32,
-        1,0,0,0,34,35,1,0,0,0,35,36,1,0,0,0,36,37,5,0,0,1,37,1,1,0,0,0,38,
-        39,5,6,0,0,39,40,5,46,0,0,40,41,5,1,0,0,41,45,5,46,0,0,42,44,5,46,
-        0,0,43,42,1,0,0,0,44,47,1,0,0,0,45,43,1,0,0,0,45,46,1,0,0,0,46,48,
-        1,0,0,0,47,45,1,0,0,0,48,49,5,2,0,0,49,3,1,0,0,0,50,51,5,6,0,0,51,
+        1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,1,14,5,14,269,8,14,10,14,
+        12,14,272,9,14,1,14,0,1,28,15,0,2,4,6,8,10,12,14,16,18,20,22,24,
+        26,28,0,1,1,0,29,34,304,0,32,1,0,0,0,2,38,1,0,0,0,4,75,1,0,0,0,6,
+        77,1,0,0,0,8,116,1,0,0,0,10,123,1,0,0,0,12,132,1,0,0,0,14,134,1,
+        0,0,0,16,151,1,0,0,0,18,153,1,0,0,0,20,164,1,0,0,0,22,173,1,0,0,
+        0,24,180,1,0,0,0,26,195,1,0,0,0,28,239,1,0,0,0,30,33,3,2,1,0,31,
+        33,3,6,3,0,32,30,1,0,0,0,32,31,1,0,0,0,33,34,1,0,0,0,34,32,1,0,0,
+        0,34,35,1,0,0,0,35,36,1,0,0,0,36,37,5,0,0,1,37,1,1,0,0,0,38,39,5,
+        6,0,0,39,40,5,46,0,0,40,41,5,1,0,0,41,45,5,46,0,0,42,44,5,46,0,0,
+        43,42,1,0,0,0,44,47,1,0,0,0,45,43,1,0,0,0,45,46,1,0,0,0,46,48,1,
+        0,0,0,47,45,1,0,0,0,48,49,5,2,0,0,49,3,1,0,0,0,50,51,5,6,0,0,51,
         52,5,46,0,0,52,76,5,46,0,0,53,59,5,46,0,0,54,56,5,43,0,0,55,57,3,
         28,14,0,56,55,1,0,0,0,56,57,1,0,0,0,57,58,1,0,0,0,58,60,5,44,0,0,
         59,54,1,0,0,0,59,60,1,0,0,0,60,72,1,0,0,0,61,62,5,40,0,0,62,68,5,
@@ -85,26 +86,29 @@ def serializedATN():
         202,205,1,0,0,0,203,201,1,0,0,0,203,204,1,0,0,0,204,207,1,0,0,0,
         205,203,1,0,0,0,206,198,1,0,0,0,206,207,1,0,0,0,207,208,1,0,0,0,
         208,209,5,42,0,0,209,27,1,0,0,0,210,211,6,14,-1,0,211,212,5,26,0,
-        0,212,213,3,28,14,0,213,214,5,27,0,0,214,232,1,0,0,0,215,216,5,41,
-        0,0,216,217,3,28,14,0,217,218,5,42,0,0,218,232,1,0,0,0,219,220,5,
-        37,0,0,220,232,3,28,14,0,221,222,5,46,0,0,222,223,5,41,0,0,223,224,
-        3,28,14,0,224,225,5,42,0,0,225,232,1,0,0,0,226,232,3,16,8,0,227,
-        232,5,47,0,0,228,232,5,38,0,0,229,232,5,39,0,0,230,232,5,7,0,0,231,
-        210,1,0,0,0,231,215,1,0,0,0,231,219,1,0,0,0,231,221,1,0,0,0,231,
-        226,1,0,0,0,231,227,1,0,0,0,231,228,1,0,0,0,231,229,1,0,0,0,231,
-        230,1,0,0,0,232,262,1,0,0,0,233,234,10,9,0,0,234,235,5,22,0,0,235,
-        261,3,28,14,10,236,237,10,8,0,0,237,238,5,23,0,0,238,261,3,28,14,
-        9,239,240,10,7,0,0,240,241,5,24,0,0,241,261,3,28,14,8,242,243,10,
-        6,0,0,243,244,5,25,0,0,244,261,3,28,14,7,245,246,10,5,0,0,246,247,
-        5,20,0,0,247,261,3,28,14,6,248,249,10,4,0,0,249,250,5,21,0,0,250,
-        261,3,28,14,5,251,252,10,3,0,0,252,253,7,0,0,0,253,261,3,28,14,4,
-        254,255,10,2,0,0,255,256,5,35,0,0,256,261,3,28,14,3,257,258,10,1,
-        0,0,258,259,5,36,0,0,259,261,3,28,14,2,260,233,1,0,0,0,260,236,1,
-        0,0,0,260,239,1,0,0,0,260,242,1,0,0,0,260,245,1,0,0,0,260,248,1,
-        0,0,0,260,251,1,0,0,0,260,254,1,0,0,0,260,257,1,0,0,0,261,264,1,
-        0,0,0,262,260,1,0,0,0,262,263,1,0,0,0,263,29,1,0,0,0,264,262,1,0,
-        0,0,25,32,34,45,56,59,65,68,72,75,84,87,96,108,113,116,123,132,145,
-        151,193,203,206,231,260,262
+        0,212,213,3,28,14,0,213,214,5,27,0,0,214,240,1,0,0,0,215,216,5,41,
+        0,0,216,217,3,28,14,0,217,218,5,42,0,0,218,240,1,0,0,0,219,220,5,
+        37,0,0,220,240,3,28,14,0,221,222,5,46,0,0,222,231,5,41,0,0,223,228,
+        3,28,14,0,224,225,5,40,0,0,225,227,3,28,14,0,226,224,1,0,0,0,227,
+        230,1,0,0,0,228,226,1,0,0,0,228,229,1,0,0,0,229,232,1,0,0,0,230,
+        228,1,0,0,0,231,223,1,0,0,0,231,232,1,0,0,0,232,233,1,0,0,0,233,
+        240,5,42,0,0,234,240,3,16,8,0,235,240,5,47,0,0,236,240,5,38,0,0,
+        237,240,5,39,0,0,238,240,5,7,0,0,239,210,1,0,0,0,239,215,1,0,0,0,
+        239,219,1,0,0,0,239,221,1,0,0,0,239,234,1,0,0,0,239,235,1,0,0,0,
+        239,236,1,0,0,0,239,237,1,0,0,0,239,238,1,0,0,0,240,270,1,0,0,0,
+        241,242,10,9,0,0,242,243,5,22,0,0,243,269,3,28,14,10,244,245,10,
+        8,0,0,245,246,5,23,0,0,246,269,3,28,14,9,247,248,10,7,0,0,248,249,
+        5,24,0,0,249,269,3,28,14,8,250,251,10,6,0,0,251,252,5,25,0,0,252,
+        269,3,28,14,7,253,254,10,5,0,0,254,255,5,20,0,0,255,269,3,28,14,
+        6,256,257,10,4,0,0,257,258,5,21,0,0,258,269,3,28,14,5,259,260,10,
+        3,0,0,260,261,7,0,0,0,261,269,3,28,14,4,262,263,10,2,0,0,263,264,
+        5,35,0,0,264,269,3,28,14,3,265,266,10,1,0,0,266,267,5,36,0,0,267,
+        269,3,28,14,2,268,241,1,0,0,0,268,244,1,0,0,0,268,247,1,0,0,0,268,
+        250,1,0,0,0,268,253,1,0,0,0,268,256,1,0,0,0,268,259,1,0,0,0,268,
+        262,1,0,0,0,268,265,1,0,0,0,269,272,1,0,0,0,270,268,1,0,0,0,270,
+        271,1,0,0,0,271,29,1,0,0,0,272,270,1,0,0,0,27,32,34,45,56,59,65,
+        68,72,75,84,87,96,108,113,116,123,132,145,151,193,203,206,228,231,
+        239,268,270
     ]
 
 class PseudoCodeAnalyzerParser ( Parser ):
@@ -1581,6 +1585,12 @@ class PseudoCodeAnalyzerParser ( Parser ):
         def ID(self):
             return self.getToken(PseudoCodeAnalyzerParser.ID, 0)
 
+        def COLON(self, i:int=None):
+            if i is None:
+                return self.getTokens(PseudoCodeAnalyzerParser.COLON)
+            else:
+                return self.getToken(PseudoCodeAnalyzerParser.COLON, i)
+
         def variable(self):
             return self.getTypedRuleContext(PseudoCodeAnalyzerParser.VariableContext,0)
 
@@ -1668,9 +1678,9 @@ class PseudoCodeAnalyzerParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 231
+            self.state = 239
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,22,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,24,self._ctx)
             if la_ == 1:
                 self.state = 211
                 self.match(PseudoCodeAnalyzerParser.CEIL)
@@ -1701,176 +1711,194 @@ class PseudoCodeAnalyzerParser ( Parser ):
                 self.match(PseudoCodeAnalyzerParser.ID)
                 self.state = 222
                 self.match(PseudoCodeAnalyzerParser.LPAREN)
-                self.state = 223
-                self.expression(0)
-                self.state = 224
+                self.state = 231
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & 214267395571840) != 0):
+                    self.state = 223
+                    self.expression(0)
+                    self.state = 228
+                    self._errHandler.sync(self)
+                    _la = self._input.LA(1)
+                    while _la==40:
+                        self.state = 224
+                        self.match(PseudoCodeAnalyzerParser.COLON)
+                        self.state = 225
+                        self.expression(0)
+                        self.state = 230
+                        self._errHandler.sync(self)
+                        _la = self._input.LA(1)
+
+
+
+                self.state = 233
                 self.match(PseudoCodeAnalyzerParser.RPAREN)
                 pass
 
             elif la_ == 5:
-                self.state = 226
+                self.state = 234
                 self.variable()
                 pass
 
             elif la_ == 6:
-                self.state = 227
+                self.state = 235
                 self.match(PseudoCodeAnalyzerParser.NUMBER)
                 pass
 
             elif la_ == 7:
-                self.state = 228
+                self.state = 236
                 self.match(PseudoCodeAnalyzerParser.TRUE)
                 pass
 
             elif la_ == 8:
-                self.state = 229
+                self.state = 237
                 self.match(PseudoCodeAnalyzerParser.FALSE)
                 pass
 
             elif la_ == 9:
-                self.state = 230
+                self.state = 238
                 self.match(PseudoCodeAnalyzerParser.NULL)
                 pass
 
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 262
+            self.state = 270
             self._errHandler.sync(self)
-            _alt = self._interp.adaptivePredict(self._input,24,self._ctx)
+            _alt = self._interp.adaptivePredict(self._input,26,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 260
+                    self.state = 268
                     self._errHandler.sync(self)
-                    la_ = self._interp.adaptivePredict(self._input,23,self._ctx)
+                    la_ = self._interp.adaptivePredict(self._input,25,self._ctx)
                     if la_ == 1:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 233
+                        self.state = 241
                         if not self.precpred(self._ctx, 9):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
-                        self.state = 234
+                        self.state = 242
                         self.match(PseudoCodeAnalyzerParser.OP_MUL)
-                        self.state = 235
+                        self.state = 243
                         self.expression(10)
                         pass
 
                     elif la_ == 2:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 236
+                        self.state = 244
                         if not self.precpred(self._ctx, 8):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
-                        self.state = 237
+                        self.state = 245
                         self.match(PseudoCodeAnalyzerParser.OP_DIV_REAL)
-                        self.state = 238
+                        self.state = 246
                         self.expression(9)
                         pass
 
                     elif la_ == 3:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 239
+                        self.state = 247
                         if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
-                        self.state = 240
+                        self.state = 248
                         self.match(PseudoCodeAnalyzerParser.OP_MOD)
-                        self.state = 241
+                        self.state = 249
                         self.expression(8)
                         pass
 
                     elif la_ == 4:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 242
+                        self.state = 250
                         if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
-                        self.state = 243
+                        self.state = 251
                         self.match(PseudoCodeAnalyzerParser.OP_DIV_ENTERA)
-                        self.state = 244
+                        self.state = 252
                         self.expression(7)
                         pass
 
                     elif la_ == 5:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 245
+                        self.state = 253
                         if not self.precpred(self._ctx, 5):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
-                        self.state = 246
+                        self.state = 254
                         self.match(PseudoCodeAnalyzerParser.OP_ADD)
-                        self.state = 247
+                        self.state = 255
                         self.expression(6)
                         pass
 
                     elif la_ == 6:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 248
+                        self.state = 256
                         if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
-                        self.state = 249
+                        self.state = 257
                         self.match(PseudoCodeAnalyzerParser.OP_SUB)
-                        self.state = 250
+                        self.state = 258
                         self.expression(5)
                         pass
 
                     elif la_ == 7:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 251
+                        self.state = 259
                         if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
-                        self.state = 252
+                        self.state = 260
                         _la = self._input.LA(1)
                         if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 33822867456) != 0)):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
-                        self.state = 253
+                        self.state = 261
                         self.expression(4)
                         pass
 
                     elif la_ == 8:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 254
+                        self.state = 262
                         if not self.precpred(self._ctx, 2):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
-                        self.state = 255
+                        self.state = 263
                         self.match(PseudoCodeAnalyzerParser.OP_AND)
-                        self.state = 256
+                        self.state = 264
                         self.expression(3)
                         pass
 
                     elif la_ == 9:
                         localctx = PseudoCodeAnalyzerParser.ExpressionContext(self, _parentctx, _parentState)
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expression)
-                        self.state = 257
+                        self.state = 265
                         if not self.precpred(self._ctx, 1):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 1)")
-                        self.state = 258
+                        self.state = 266
                         self.match(PseudoCodeAnalyzerParser.OP_OR)
-                        self.state = 259
+                        self.state = 267
                         self.expression(2)
                         pass
 
              
-                self.state = 264
+                self.state = 272
                 self._errHandler.sync(self)
-                _alt = self._interp.adaptivePredict(self._input,24,self._ctx)
+                _alt = self._interp.adaptivePredict(self._input,26,self._ctx)
 
         except RecognitionException as re:
             localctx.exception = re

@@ -127,6 +127,12 @@ def analyze_algorithm(filepath, translate_mode=False):
     print("="*60)
     print("\nAnálisis completado exitosamente.")
 
+    # --- CAMBIO IMPORTANTE: RETORNAR EL VALOR DE COMPLEJIDAD ---
+    if analysis_result and analysis_result.worst_case:
+        return analysis_result.worst_case
+    else:
+        return "Desconocida"
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("\nUso del Analizador:")

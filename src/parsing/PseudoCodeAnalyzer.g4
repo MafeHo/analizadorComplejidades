@@ -137,7 +137,7 @@ expression:
           (CEIL expression FLOOR) 
           | (LPAREN expression RPAREN) 
           | (OP_NOT expression)
-          | (ID LPAREN expression RPAREN) 
+          | (ID LPAREN (expression (COLON expression)*)? RPAREN)
           | variable
           | NUMBER
           | TRUE

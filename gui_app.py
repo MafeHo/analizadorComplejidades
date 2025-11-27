@@ -1,17 +1,31 @@
 import customtkinter as ctk
-import sys
+from tkinter import filedialog, messagebox
 import threading
+import sys
+import os
 from io import StringIO
-from src.main import analyze_algorithm  # Importamos tu lógica existente
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 import re
-import time
+
+# --- CORRECCIÓN DE IMPORTACIÓN ---
+# Como este archivo está en la raíz, importamos 'analyze_algorithm' desde el paquete 'src'
+# Asegúrate de que exista un archivo __init__.py en la carpeta src (aunque en Python 3 suele funcionar sin él)
+try:
+    from src.main import analyze_algorithm
+except ImportError as e:
+    print(f"Error de importación: {e}")
+    print("Asegúrate de que la estructura sea:")
+    print("  ANALIZADOR/")
+    print("    gui_app.py")
+    print("    src/")
+    print("      main.py")
+    sys.exit(1)
 
 # Configuración inicial de diseño
-ctk.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
-ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+ctk.set_appearance_mode("Dark")
+ctk.set_default_color_theme("blue")
 
 class OutputRedirector(object):
     """Clase auxiliar para redirigir los prints a la caja de texto de la GUI"""
@@ -31,153 +45,183 @@ class AlgorithmAnalyzerApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Configuración de la ventana
         self.title("Analizador de Complejidad Híbrido (ANTLR + LLM)")
         self.geometry("1100x700")
 
-        # Grid layout (2 columnas)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # --- PANEL IZQUIERDO (Entrada y Controles) ---
+        self.current_file_path = None
+
+        # --- PANEL IZQUIERDO ---
         self.sidebar_frame = ctk.CTkFrame(self, width=300, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Analizador\nAlgorítmico", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
-        self.code_label = ctk.CTkLabel(self.sidebar_frame, text="Escribe tu Algoritmo:", anchor="w")
-        self.code_label.grid(row=1, column=0, padx=20, pady=(10, 0))
+        self.btn_load = ctk.CTkButton(self.sidebar_frame, text="Cargar Archivo", command=self.load_file)
+        self.btn_load.grid(row=1, column=0, padx=20, pady=10)
 
-        # Caja de texto para el Código
-        self.code_input = ctk.CTkTextbox(self.sidebar_frame, width=280, height=300, font=("Consolas", 12))
-        self.code_input.grid(row=2, column=0, padx=20, pady=(5, 20))
-        # Código de ejemplo por defecto
-        default_code = """SumaGauss(n)
+        self.code_label = ctk.CTkLabel(self.sidebar_frame, text="Editor de Código:", anchor="w")
+        self.code_label.grid(row=2, column=0, padx=20, pady=(10, 0))
+
+        self.code_input = ctk.CTkTextbox(self.sidebar_frame, width=280, height=250, font=("Consolas", 12))
+        self.code_input.grid(row=3, column=0, padx=20, pady=(5, 20))
+        
+        default_code = """MergeSort(A, n)
 begin
-    suma <- 0;
-    for i <- 1 to n do
+    If (n > 1) then
     begin
-        suma <- suma + i;
+        mitad <- n / 2;
+        CALL MergeSort(A, mitad);
+        CALL MergeSort(A, mitad);
+        for i <- 1 to n do
+        begin
+            temp <- A[i];
+        end;
     end;
 end;"""
         self.code_input.insert("0.0", default_code)
 
-        # Switch para traducción
-        self.translate_switch = ctk.CTkSwitch(self.sidebar_frame, text="Es Lenguaje Natural (Traducir)")
-        self.translate_switch.grid(row=3, column=0, padx=20, pady=10)
+        self.translate_switch = ctk.CTkSwitch(self.sidebar_frame, text="Traducir Lenguaje Natural")
+        self.translate_switch.grid(row=4, column=0, padx=20, pady=10)
 
-        # Botón de Analizar
-        self.analyze_button = ctk.CTkButton(self.sidebar_frame, text="ANALYZE NOW", command=self.start_analysis_thread)
-        self.analyze_button.grid(row=4, column=0, padx=20, pady=20)
-
+        self.analyze_button = ctk.CTkButton(self.sidebar_frame, text="EJECUTAR ANÁLISIS", fg_color="green", hover_color="darkgreen", command=self.start_analysis_thread)
+        self.analyze_button.grid(row=5, column=0, padx=20, pady=20)
         
-        # Botón de Visualizar Recursión
-        self.visualize_btn = ctk.CTkButton(self.sidebar_frame, text="Ver Animación Pila (Recursión)", fg_color="#E04F5F", hover_color="#C03545", command=self.open_stack_visualizer)
-        self.visualize_btn.grid(row=5, column=0, padx=20, pady=10)
+        self.visualize_btn = ctk.CTkButton(self.sidebar_frame, text="Ver Pila de Recursión", fg_color="#E04F5F", hover_color="#C03545", command=self.open_stack_visualizer)
+        self.visualize_btn.grid(row=6, column=0, padx=20, pady=10)
 
-        # --- PANEL DERECHO (Resultados y Gráficas) ---
+        # --- PANEL DERECHO ---
         self.right_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.right_frame.grid(row=0, column=1, sticky="nsew")
-        self.right_frame.grid_rowconfigure(1, weight=1) # Output expandible
+        self.right_frame.grid_rowconfigure(1, weight=1)
         self.right_frame.grid_columnconfigure(0, weight=1)
 
-        # 1. Gráfica (Placeholder por ahora)
-        self.plot_frame = ctk.CTkFrame(self.right_frame, height=200, fg_color=None)
+        # 1. Panel de Gráfica
+        self.plot_frame = ctk.CTkFrame(self.right_frame, height=250, fg_color=None)
         self.plot_frame.grid(row=0, column=0, padx=20, pady=20, sticky="ew")
         
-        # Etiqueta de Consola
-        self.console_label = ctk.CTkLabel(self.right_frame, text="Log de Ejecución y Análisis:", anchor="w")
+        self.console_label = ctk.CTkLabel(self.right_frame, text="Resultados y Trazabilidad:", anchor="w")
         self.console_label.grid(row=1, column=0, padx=20, pady=(0,5), sticky="w")
 
-        # 2. Consola de Salida (Donde se redirigen los prints)
+        # 2. Consola
         self.console_output = ctk.CTkTextbox(self.right_frame, font=("Consolas", 11), state="disabled")
         self.console_output.grid(row=2, column=0, padx=20, pady=(0, 20), sticky="nsew")
 
+    def load_file(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")])
+        if file_path:
+            self.current_file_path = file_path
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                self.code_input.delete("0.0", "end")
+                self.code_input.insert("0.0", content)
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo leer el archivo: {e}")
+
     def open_stack_visualizer(self):
-        # Obtenemos el texto actual de la consola
         console_content = self.console_output.get("0.0", "end")
         if not console_content.strip():
+            messagebox.showwarning("Aviso", "Primero ejecuta un análisis.")
             return
-            
-        # Abrimos la ventana
         StackVisualizerWindow(self, console_content)
 
     def start_analysis_thread(self):
-        # Ejecutamos en un hilo aparte para no congelar la interfaz
+        self.analyze_button.configure(state="disabled", text="Analizando...")
         threading.Thread(target=self.run_analysis).start()
 
     def run_analysis(self):
-        # 1. Limpiar consola (Esto debe hacerse en el hilo principal idealmente, pero suele aguantar)
         self.console_output.configure(state="normal")
         self.console_output.delete("0.0", "end")
         self.console_output.configure(state="disabled")
 
-        # 2. Guardar código
         code_text = self.code_input.get("0.0", "end").strip()
         if not code_text:
+            self.after(0, lambda: self.analyze_button.configure(state="normal", text="EJECUTAR ANÁLISIS"))
             return
 
         temp_filename = "temp_gui_input.txt"
         with open(temp_filename, "w", encoding="utf-8") as f:
             f.write(code_text)
 
-        # 3. Redirigir stdout
         old_stdout = sys.stdout
         sys.stdout = OutputRedirector(self.console_output)
 
+        complexity_result = "Desconocida" # Valor por defecto
+
         try:
             should_translate = bool(self.translate_switch.get())
-            analyze_algorithm(temp_filename, translate_mode=should_translate)
             
-            # --- CORRECCIÓN AQUÍ ---
-            # No llamamos a update_graph directamente. 
-            # Le pedimos a Tkinter que lo haga en el hilo principal (0ms de espera).
-            self.after(0, lambda: self.update_graph(code_text))
+            # Llamada a la función importada
+            complexity_result = analyze_algorithm(temp_filename, translate_mode=should_translate)
+            
+            # Actualizamos la gráfica con el resultado real
+            self.after(0, lambda: self.update_graph(complexity_result))
 
         except Exception as e:
             print(f"\nERROR CRÍTICO EN GUI: {e}")
         finally:
             sys.stdout = old_stdout
+            self.after(0, lambda: self.analyze_button.configure(state="normal", text="EJECUTAR ANÁLISIS"))
     
-    def update_graph(self, code_text):
-        # Esta función dibuja la gráfica en el panel superior derecho
+    def update_graph(self, complexity_str):
+        """
+        Dibuja la gráfica basándose en la complejidad CALCULADA por el sistema.
+        complexity_str: String como "O(n^2)", "Theta(n log n)", etc.
+        """
         
-        # Limpiar gráfica anterior si existe
+        # Limpiar gráfica anterior
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
 
         # Crear figura matplotlib
-        fig, ax = plt.subplots(figsize=(5, 2), dpi=100)
-        fig.patch.set_facecolor('#2b2b2b') # Color de fondo oscuro
+        fig, ax = plt.subplots(figsize=(5, 2.5), dpi=100)
+        fig.patch.set_facecolor('#2b2b2b')
         ax.set_facecolor('#2b2b2b')
         
-        # Datos dummy (Esto lo mejoraremos leyendo el resultado real del parser)
-        x = np.linspace(1, 10, 100)
+        x = np.linspace(1, 20, 100) # Rango de n
         
-        # Heurística simple para la demo gráfica:
-        if "for" in code_text and "for" in code_text.split("for")[1]: # Doble for
-            y = x**2
-            title = "Visualización Aproximada: Cuadrática O(n^2)"
-            color = 'cyan'
-        elif "for" in code_text:
-            y = x
-            title = "Visualización Aproximada: Lineal O(n)"
-            color = 'lime'
-        elif "MERGE" in code_text or "HANOI" in code_text: # Recursivo exponencial/log
-             y = x * np.log(x) # Aprox
-             title = "Visualización: Log-Lineal o Exponencial"
-             color = 'orange'
-        else:
-            y = [1] * len(x)
-            title = "Visualización: Constante O(1)"
-            color = 'white'
+        # Normalizamos el string para facilitar la búsqueda
+        comp_clean = str(complexity_str).lower().replace(" ", "")
+        
+        # Lógica para determinar la función Y basada en la complejidad REAL
+        y = x # Default lineal
+        title = f"Visualización: {complexity_str}"
+        color = 'white'
 
-        ax.plot(x, y, color=color)
-        ax.set_title(title, color='white', fontsize=8)
+        if "n^2" in comp_clean or "quadratic" in comp_clean:
+            y = x**2
+            color = '#FF5733' # Rojo naranja
+        elif "nlog" in comp_clean or "n*log" in comp_clean:
+            y = x * np.log2(x)
+            color = '#33FF57' # Verde lima
+        elif "logn" in comp_clean:
+            y = np.log2(x)
+            color = '#33C1FF' # Azul claro
+        elif "2^n" in comp_clean:
+            y = 2**x
+            color = '#FF33A8' # Rosa fuerte
+        elif "n^3" in comp_clean:
+            y = x**3
+            color = '#C70039' # Rojo oscuro
+        elif "1" in comp_clean and "n" not in comp_clean: # O(1)
+            y = np.ones_like(x)
+            color = '#FFC300' # Amarillo
+        else:
+            # Si no reconoce (ej. O(n)), asume lineal por defecto
+            y = x
+            color = '#DAF7A6' 
+
+        ax.plot(x, y, color=color, linewidth=2)
+        ax.set_title(title, color='white', fontsize=10, fontweight='bold')
+        ax.set_xlabel("Tamaño de entrada (n)", color='white', fontsize=8)
+        ax.set_ylabel("Tiempo / Operaciones", color='white', fontsize=8)
         ax.tick_params(axis='x', colors='white')
         ax.tick_params(axis='y', colors='white')
-        ax.grid(True, linestyle='--', alpha=0.3)
+        ax.grid(True, linestyle='--', alpha=0.2)
 
         # Insertar en Tkinter
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
@@ -191,7 +235,6 @@ class StackVisualizerWindow(ctk.CTkToplevel):
         self.title("Visualización de Pila de Llamadas (Stack Frames)")
         self.geometry("600x600")
         
-        # Canvas para dibujar
         self.canvas = ctk.CTkCanvas(self, bg="#1e1e1e", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True, padx=10, pady=10)
         
@@ -204,30 +247,28 @@ class StackVisualizerWindow(ctk.CTkToplevel):
             self.animate_stack()
 
     def parse_trace_table(self, text):
-        """Busca la tabla markdown en el texto y extrae (Paso, Nivel, Función)"""
         steps = []
-        # Regex para buscar filas como: | 1 | 2 | FACTORIAL(2) | ...
-        # Busca líneas que empiecen por | número | número | ...
+        # Busca líneas que empiecen por "| número | número |"
         pattern = re.compile(r"\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]+)\|")
         
         lines = text.split('\n')
         for line in lines:
             match = pattern.search(line)
             if match:
-                step_num = int(match.group(1))
-                stack_level = int(match.group(2))
-                func_name = match.group(3).strip()
-                steps.append((step_num, stack_level, func_name))
+                try:
+                    step_num = int(match.group(1))
+                    stack_level = int(match.group(2))
+                    func_name = match.group(3).strip().replace("`", "") # Limpiar backticks markdown
+                    steps.append((step_num, stack_level, func_name))
+                except ValueError:
+                    continue # Saltar cabeceras o líneas mal formadas
         return steps
 
     def animate_stack(self):
-        """Dibuja rectángulos basándose en el nivel de pila"""
         base_x = 100
         base_y = 550
         box_height = 40
         box_width = 400
-        
-        self.canvas.delete("all")
         
         def draw_step(index):
             if index >= len(self.steps):
@@ -236,42 +277,35 @@ class StackVisualizerWindow(ctk.CTkToplevel):
 
             step, level, func = self.steps[index]
             
-            # Limpiar canvas para redibujar el estado actual
             self.canvas.delete("all")
             
-            # Título
-            self.canvas.create_text(300, 30, text=f"Paso {step}: {func}", fill="white", font=("Arial", 14))
-            self.canvas.create_text(300, 50, text=f"Nivel de Pila: {level}", fill="gray", font=("Arial", 12))
+            # Info Superior
+            self.canvas.create_text(300, 30, text=f"Paso {step}: Ejecutando...", fill="white", font=("Arial", 14, "bold"))
+            self.canvas.create_text(300, 60, text=f"Función: {func}", fill="#4CA6FF", font=("Consolas", 12))
+            self.canvas.create_text(300, 90, text=f"Profundidad de Pila: {level}", fill="gray", font=("Arial", 12))
 
-            # Dibujar la pila (desde abajo hacia arriba)
-            # Si nivel es 3, dibujamos 3 rectángulos: 1, 2, 3.
+            # Colores para los niveles de pila
+            colors = ["#2B2B2B", "#3B8ED0", "#E04F5F", "#2CC985", "#E5B305", "#9866C9"]
             
-            colors = ["#3B8ED0", "#E04F5F", "#2CC985", "#E5B305", "#9866C9"] # Colores para diferenciar niveles
-            
+            # Dibujar la pila
             for i in range(1, level + 1):
-                color = colors[(i-1) % len(colors)]
-                
-                # Coordenadas (se apilan hacia arriba)
+                color = colors[i % len(colors)]
                 y1 = base_y - (i * (box_height + 5))
                 y2 = y1 + box_height
                 
-                # Rectángulo (Ambiente)
-                self.canvas.create_rectangle(base_x, y1, base_x + box_width, y2, fill=color, outline="white")
+                # Caja del Stack Frame
+                self.canvas.create_rectangle(base_x, y1, base_x + box_width, y2, fill=color, outline="white", width=2)
                 
-                # Texto dentro del rectángulo
-                # Intentamos buscar el nombre de la función de este nivel en los pasos anteriores
-                # (Simplificación: usamos el nombre actual para el nivel superior)
+                # Texto del Stack Frame
                 label = f"Stack Frame #{i}"
                 if i == level:
-                    label += f" : {func}"
+                    label += f" (Activo)"
                 
-                self.canvas.create_text(base_x + 200, y1 + 20, text=label, fill="black", font=("Consolas", 10, "bold"))
+                self.canvas.create_text(base_x + 200, y1 + 20, text=label, fill="white", font=("Consolas", 10, "bold"))
 
-            # Programar el siguiente frame
-            self.after(1000, draw_step, index + 1) # 1 segundo por paso
+            self.after(800, draw_step, index + 1) # 0.8s por paso
 
         draw_step(0)
-
 
 if __name__ == "__main__":
     app = AlgorithmAnalyzerApp()
