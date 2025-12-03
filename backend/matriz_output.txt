@@ -1,0 +1,82 @@
+﻿
+============================================================
+INICIANDO SISTEMA DE ANALISIS ALGORITMICO
+============================================================
+
+--- 1. Anßlisis Estructural (ANTLR) ---
+
+--- 2. Cßlculo de Costos (Visitor) ---
+Analizando: MatrizRecursiva
+
+--- DETALLE DE COSTOS ---
+LÝnea    | Costo
+----------------------------------------
+3        | n*(3*n + 1) + n + 8
+5        | 4
+18       | Sumatoria i=1..n
+19       | Sumatoria j=1..n
+20       | 2
+============================================================
+
+--- 3. Validaci¾n Te¾rica (LLM) ---
+Okay, procedamos con el anßlisis del pseudoc¾digo proporcionado.
+
+**1. Identificaci¾n: Iterativo o Recursivo**
+
+El c¾digo `MatrizRecursiva(n)` claramente es **Recursivo**.  Esto se evidencia por las m·ltiples llamadas a `MatrizRecursiva(mitad)` dentro de su propio cuerpo.
+
+**2. MÚtodo Te¾rico Aplicable (Recursivo)**
+
+Dado que es un algoritmo recursivo, debemos determinar quÚ mÚtodo te¾rico es mßs adecuado para analizar su complejidad.  Tenemos tres opciones principales:
+
+*   **Teorema Maestro (Master Theorem):**  Este es generalmente el primer mÚtodo a considerar debido a su simplicidad.
+*   **MÚtodo de Sustituci¾n (Substitution Method):**  Este mÚtodo es mßs general y puede manejar casos que el Teorema Maestro no puede, pero requiere "adivinar" una forma de soluci¾n y luego probarla por inducci¾n.
+*   **MÚtodo del ┴rbol de Recursi¾n (Recursion Tree Method):** Este mÚtodo visualiza la recursi¾n como un ßrbol, permitiendo estimar el trabajo realizado en cada nivel y sumar sobre todos los niveles.
+
+En este caso, el **Teorema Maestro** es el mßs adecuado.  La forma general del Teorema Maestro es:
+
+`T(n) = aT(n/b) + f(n)`
+
+Donde:
+
+*   `a` es el n·mero de subproblemas en la recursi¾n.
+*   `n/b` es el tama±o de cada subproblema.
+*   `f(n)` es el costo del trabajo realizado fuera de las llamadas recursivas (la "combinaci¾n").
+
+**3. Aplicaci¾n del Teorema Maestro**
+
+En nuestro caso:
+
+*   `a = 8` (hay 8 llamadas recursivas)
+*   `b = 2` (el tama±o del problema se divide por 2 en cada llamada)
+*   `f(n) = ?(n^2)` (la doble iteraci¾n `for i` y `for j` tiene complejidad n*n = n^2)
+
+Ahora, necesitamos comparar `f(n) = n^2` con `n^(log_b a) = n^(log_2 8) = n^3`.
+
+Existe un caso en el Teorema Maestro que es:
+
+*   Si `f(n) = O(n^(log_b a - ?))` para alguna constante `? > 0`, entonces `T(n) = ?(n^(log_b a))`.
+
+En nuestro caso, `n^2 = O(n^(3 - 1))`, entonces `? = 1 > 0`.  Por lo tanto, podemos aplicar este caso del Teorema Maestro.
+
+**4. Conclusi¾n Final: Complejidad**
+
+Aplicando el Teorema Maestro:
+
+`T(n) = ?(n^(log_b a)) = ?(n^3)`
+
+Dado que el Teorema Maestro nos da un resultado "theta", esto implica que el mejor caso, el peor caso y el caso promedio son todos iguales.
+
+*   **Peor Caso (O): O(n^3)**
+*   **Mejor Caso (?): ?(n^3)**
+*   **Caso Promedio (?): ?(n^3)**
+
+**Evaluaci¾n:**
+
+El anßlisis es correcto.  La identificaci¾n de la recursi¾n, la selecci¾n del Teorema Maestro y su correcta aplicaci¾n son impecables. La conclusi¾n es precisa y bien justificada.  No hay errores significativos.
+
+**Calificaci¾n: Excelente.**
+
+--- 4. Generando Trace Table ---
+
+Anßlisis finalizado.

@@ -1,0 +1,12 @@
+// Prueba 7: Resta y vencerás simple
+Factorial(n)
+begin
+    If (n < 1) then begin
+        return 1;
+    end
+    else begin
+        // Solo 1 llamada recursiva restando
+        val <- CALL Factorial(n-1);
+        return n * val;
+    end;
+end

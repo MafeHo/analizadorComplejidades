@@ -1,0 +1,2 @@
+﻿Syntax Error at line 1:10 - no viable alternative at input 'algorithmFibonacci'
+Parsing complete.

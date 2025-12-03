@@ -1,0 +1,20 @@
+```
+// Algoritmo Torres de Hanoi
+// n: número de discos
+// origen: varilla de origen
+// destino: varilla de destino
+// auxiliar: varilla auxiliar
+
+procedure Hanoi(n, origen, destino, auxiliar) begin
+  If (n == 1) then begin
+    print "Mover disco 1 desde " + origen + " hasta " + destino; // Imprime el movimiento
+  end else begin
+    Hanoi(n-1, origen, auxiliar, destino); // Mueve n-1 discos de origen a auxiliar
+    print "Mover disco " + n + " desde " + origen + " hasta " + destino; // Mueve el disco n de origen a destino
+    Hanoi(n-1, auxiliar, destino, origen); // Mueve n-1 discos de auxiliar a destino
+  end;
+end;
+
+// Ejemplo de uso:
+// Hanoi(3, "A", "C", "B");
+```

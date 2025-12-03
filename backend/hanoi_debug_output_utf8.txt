@@ -1,0 +1,102 @@
+﻿
+============================================================
+INICIANDO SISTEMA DE ANALISIS ALGORITMICO
+============================================================
+
+--- 1. Anßlisis Estructural (ANTLR) ---
+
+--- 2. Cßlculo de Costos (Visitor) ---
+Analizando: HANOI
+Ecuacion detectada: T(n) = Max(2, 2*T(n - 1) + 2) + 3
+
+--- DETECTOR DEL TEOREMA MAESTRO ---
+Tipo: linear_recurrence
+ > Subtipo: exponential
+ > a = 2
+------------------------------------
+
+--- DETALLE DE COSTOS ---
+LÝnea    | Costo
+----------------------------------------
+6        | Max(2, 2*T(n - 1) + 2) + 3
+8        | 2
+14       | 2*T(n - 1) + 2
+============================================================
+
+--- 3. Validaci¾n Te¾rica (LLM) ---
+De acuerdo, evaluarÚ el pseudoc¾digo proporcionado para el problema de las Torres de Hanoi.
+
+**1. Identificaci¾n: Iterativo o Recursivo**
+
+El c¾digo utiliza una funci¾n `HANOI(n)` que se llama a sÝ misma con un argumento reducido (`n-1`).  Por lo tanto, el algoritmo es **Recursivo**.
+
+**2. MÚtodo Te¾rico Aplicable (Recursivo):**
+
+Tenemos la siguiente relaci¾n de recurrencia:
+
+*   T(n) = 2T(n-1) + 1
+*   T(1) = 1
+
+Podemos analizar esta recurrencia utilizando los siguientes mÚtodos:
+
+*   **MÚtodo de Sustituci¾n (Iteraci¾n):**  Podemos expandir la recurrencia para ver un patr¾n:
+
+    T(n) = 2T(n-1) + 1
+    T(n) = 2(2T(n-2) + 1) + 1 = 2<sup>2</sup>T(n-2) + 2 + 1
+    T(n) = 2<sup>2</sup>(2T(n-3) + 1) + 2 + 1 = 2<sup>3</sup>T(n-3) + 2<sup>2</sup> + 2 + 1
+    ...
+    T(n) = 2<sup>k</sup>T(n-k) + 2<sup>k-1</sup> + ... + 2 + 1
+
+    Cuando n-k = 1 (caso base), k = n-1:
+
+    T(n) = 2<sup>n-1</sup>T(1) + 2<sup>n-2</sup> + ... + 2 + 1
+    T(n) = 2<sup>n-1</sup>(1) +  ?<sub>i=0</sub><sup>n-2</sup> 2<sup>i</sup>
+    T(n) = 2<sup>n-1</sup> + (2<sup>n-1</sup> - 1)  = 2<sup>n</sup> - 1
+
+*   **MÚtodo del ┴rbol de Recursi¾n:**  Cada nodo en el ßrbol de recursi¾n representa una llamada a `HANOI(n)`.  Cada nodo tiene dos hijos (correspondientes a las dos llamadas `HANOI(n-1)`). La raÝz es `HANOI(n)`, sus hijos son `HANOI(n-1)`, y asÝ sucesivamente hasta llegar a las hojas `HANOI(1)`. El costo en cada nivel es la suma del costo de cada nodo en ese nivel. En este caso, el costo de cada nodo es constante (1). El n·mero total de nodos en el ßrbol es  ?<sub>i=0</sub><sup>n-1</sup> 2<sup>i</sup> = 2<sup>n</sup> - 1.  Por lo tanto, el costo total es O(2<sup>n</sup>).
+
+*   **Teorema Maestro (Master Theorem):**  La forma general del teorema maestro es:
+
+    T(n) = aT(n/b) + f(n)
+
+    En nuestro caso, tenemos T(n) = 2T(n-1) + 1.  **El Teorema Maestro no se aplica directamente aquÝ** porque el tama±o del subproblema es `n-1` en lugar de `n/b`.  El teorema maestro asume una divisi¾n del problema en partes que son una *fracci¾n* del tama±o del problema original.
+
+*   **MÚtodo de la Ecuaci¾n CaracterÝstica:**  Aunque la relaci¾n de recurrencia no es de la forma exacta para aplicar directamente el mÚtodo de la ecuaci¾n caracterÝstica (que generalmente se usa para recurrencias lineales homogÚneas con coeficientes constantes), podemos adaptar un poco el enfoque. La relaci¾n T(n) = 2T(n-1) + 1 puede transformarse en una forma mßs adecuada para este mÚtodo. Consideremos una nueva funci¾n S(n) = T(n) + 1. Entonces, T(n) = S(n) - 1. Sustituyendo en la recurrencia original:
+
+    S(n) - 1 = 2(S(n-1) - 1) + 1
+    S(n) - 1 = 2S(n-1) - 2 + 1
+    S(n) = 2S(n-1)
+
+    Esta nueva recurrencia, S(n) = 2S(n-1), sÝ es lineal y homogÚnea. Su ecuaci¾n caracterÝstica es r - 2 = 0, con la raÝz r = 2. Por lo tanto, la soluci¾n para S(n) es de la forma S(n) = c * 2<sup>n</sup>, donde c es una constante.
+
+    Como S(n) = T(n) + 1, entonces T(n) = c * 2<sup>n</sup> - 1.  Para determinar 'c', usamos la condici¾n inicial T(1) = 1:
+
+    1 = c * 2<sup>1</sup> - 1
+    2 = 2c
+    c = 1
+
+    Por lo tanto, T(n) = 2<sup>n</sup> - 1.
+
+**Conclusi¾n Intermedia:** Tanto el mÚtodo de Sustituci¾n (Iteraci¾n), el ┴rbol de Recursi¾n y la adaptaci¾n del mÚtodo de la Ecuaci¾n CaracterÝstica convergen a la soluci¾n: T(n) = 2<sup>n</sup> - 1.  El teorema Maestro no es aplicable directamente en este caso.
+
+**3. Anßlisis de Complejidad**
+
+Basado en el anßlisis anterior, T(n) = 2<sup>n</sup> - 1.
+
+*   **Peor Caso (O):** O(2<sup>n</sup>). El peor caso ocurre siempre, ya que la funci¾n siempre realiza las mismas llamadas recursivas independientemente de la entrada.
+*   **Mejor Caso (?):** ?(2<sup>n</sup>). Similarmente, el mejor caso tambiÚn es 2<sup>n</sup> porque el algoritmo siempre realiza el mismo n·mero de operaciones.
+*   **Caso Promedio (?):** ?(2<sup>n</sup>).  El comportamiento siempre es el mismo, por lo que el caso promedio coincide con el peor y el mejor caso.
+
+**4. Conclusi¾n Final**
+
+El pseudoc¾digo representa un algoritmo recursivo para resolver el problema de las Torres de Hanoi.  La complejidad temporal es:
+
+*   **Peor Caso: O(2<sup>n</sup>)**
+*   **Mejor Caso: ?(2<sup>n</sup>)**
+*   **Caso Promedio: ?(2<sup>n</sup>)**
+
+Por lo tanto, la complejidad esperada de O(2<sup>n</sup>) indicada en el comentario del c¾digo es correcta.  El anßlisis detallado confirma esta complejidad exponencial.
+
+--- 4. Generando Trace Table ---
+
+Anßlisis finalizado.

@@ -1,0 +1,105 @@
+﻿
+============================================================
+INICIANDO SISTEMA DE ANALISIS ALGORITMICO
+============================================================
+
+--- 1. Anßlisis Estructural (ANTLR) ---
+
+--- 2. Cßlculo de Costos (Visitor) ---
+Analizando: MatrizRecursiva
+Ecuacion detectada: T(n) = Max(0, n*(3*n + 1) + n + 8*T(n/2) + 5) + 3
+
+--- DETECTOR DEL TEOREMA MAESTRO ---
+Tipo: master_theorem
+ > a = 8
+ > b = 2
+ > f(n) = n*(3*n + 1) + n + 8
+ > Caso Detectado: 1
+------------------------------------
+
+--- DETALLE DE COSTOS ---
+LÝnea    | Costo
+----------------------------------------
+3        | Max(0, n*(3*n + 1) + n + 8*T(n/2) + 5) + 3
+5        | 4
+8        | T(n/2)
+9        | T(n/2)
+10       | T(n/2)
+11       | T(n/2)
+12       | T(n/2)
+13       | T(n/2)
+14       | T(n/2)
+15       | T(n/2)
+18       | Sumatoria i=1..n
+19       | Sumatoria j=1..n
+20       | 2
+============================================================
+
+--- 3. Validaci¾n Te¾rica (LLM) ---
+Bien, analicemos el pseudoc¾digo `MatrizRecursiva(n)` proporcionado para determinar su complejidad algorÝtmica.
+
+**1. Tipo de Algoritmo:**
+
+El algoritmo es **Recursivo** debido a que la funci¾n `MatrizRecursiva` se llama a sÝ misma dentro de su propia definici¾n.
+
+**2. MÚtodo Te¾rico Aplicable (Recursividad):**
+
+Dado que tenemos una funci¾n recursiva, debemos determinar quÚ mÚtodo de anßlisis de recursi¾n es el mßs adecuado. Tenemos las siguientes opciones:
+
+*   **Teorema Maestro (Master Theorem):** Este teorema es ·til para relaciones de recurrencia de la forma `T(n) = aT(n/b) + f(n)`.
+
+*   **MÚtodo de Sustituci¾n (o CaracterÝstico):** Este mÚtodo implica adivinar una forma para la soluci¾n y luego usar inducci¾n matemßtica para probar que la suposici¾n es correcta. Es mßs ·til cuando se conoce la estructura general de la soluci¾n o se puede estimar.
+
+*   **MÚtodo del ┴rbol de Recursi¾n:** Este mÚtodo visualiza la recursi¾n como un ßrbol y calcula el trabajo realizado en cada nivel del ßrbol. Luego se suman los trabajos de todos los niveles.
+
+En este caso, el **Teorema Maestro** es el mÚtodo mßs adecuado.  La relaci¾n de recurrencia que podemos extraer del c¾digo es:
+
+`T(n) = 8T(n/2) + O(n^2)`
+
+Donde:
+
+*   `8` es el n·mero de llamadas recursivas (`a = 8`).
+*   `n/2` es el tama±o de la entrada en cada llamada recursiva (`b = 2`).
+*   `O(n^2)` es el costo de la operaci¾n fuera de la recursi¾n (la suma de las matrices).  Esto se debe a los bucles anidados `for i <- 1 to n` y `for j <- 1 to n`.  El `suma <- 1` dentro de los bucles se ejecuta `n * n = n^2` veces.
+
+**3. Aplicaci¾n del Teorema Maestro:**
+
+El Teorema Maestro tiene tres casos. Para aplicarlo, debemos comparar `f(n) = n^2` con `n^(log_b a)`.
+
+En nuestro caso:
+
+*   `a = 8`
+*   `b = 2`
+*   `log_b a = log_2 8 = 3`
+*   `n^(log_b a) = n^3`
+
+Ahora comparamos `f(n) = n^2` con `n^3`.  Observamos que `f(n) = O(n^(log_b a - ?))` para alg·n `? > 0`.  En este caso, podemos elegir `? = 1`, ya que `n^2 = O(n^(3 - 1)) = O(n^2)`.
+
+Por lo tanto, estamos en el **Caso 1** del Teorema Maestro, que establece que:
+
+Si `f(n) = O(n^(log_b a - ?))` para alguna constante `? > 0`, entonces `T(n) = ?(n^(log_b a))`.
+
+Aplicando esto a nuestro problema:
+
+`T(n) = ?(n^3)`
+
+**4. Complejidad Final:**
+
+*   **Peor Caso (O):** O(n^3)
+*   **Mejor Caso (?):** ?(n^3)
+*   **Caso Promedio (?):** ?(n^3)
+
+**Conclusi¾n Final:**
+
+La complejidad del algoritmo `MatrizRecursiva(n)` es **?(n^3)**.  Esto significa que en el peor, mejor y promedio de los casos, el tiempo de ejecuci¾n del algoritmo crece c·bicamente con el tama±o de la entrada `n`.
+
+**Observaciones:**
+
+*   La constante `suma <- 1` dentro de los bucles no afecta la complejidad asint¾tica, ya que es una operaci¾n de tiempo constante.
+*   El Teorema Maestro es una herramienta poderosa para analizar relaciones de recurrencia que surgen en algoritmos recursivos.
+
+Este anßlisis proporciona una evaluaci¾n precisa y tÚcnica de la complejidad del pseudoc¾digo proporcionado.
+
+--- 4. Generando Trace Table ---
+
+Anßlisis finalizado.

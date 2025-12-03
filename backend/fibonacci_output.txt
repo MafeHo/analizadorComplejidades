@@ -1,0 +1,58 @@
+﻿
+============================================================
+INICIANDO SISTEMA DE ANALISIS ALGORITMICO
+============================================================
+
+--- 1. Anßlisis Estructural (ANTLR) ---
+Advertencia: Errores de sintaxis detectados (el anßlisis puede ser parcial).
+
+--- 2. Cßlculo de Costos (Visitor) ---
+Error en Visitor: 'NoneType' object has no attribute 'accept'
+
+--- 3. Validaci¾n Te¾rica (LLM) ---
+De acuerdo, analizarÚ el pseudoc¾digo proporcionado del algoritmo Fibonacci y determinarÚ su complejidad.
+
+**1. Tipo de Algoritmo:**
+
+El algoritmo `Fibonacci` es **Recursivo**.  La funci¾n se llama a sÝ misma con valores de entrada mßs peque±os (n-1 y n-2), lo que es la caracterÝstica fundamental de la recursi¾n.
+
+**2. MÚtodo Te¾rico para Anßlisis (Recursivo):**
+
+Para analizar la complejidad de este algoritmo recursivo, el mÚtodo mßs adecuado es el **MÚtodo del ┴rbol de Recursi¾n**. Aunque el Teorema Maestro podrÝa parecer aplicable a primera vista, la estructura de la recursi¾n (recursi¾n en dos subproblemas con tama±os n-1 y n-2) dificulta su aplicaci¾n directa.  El MÚtodo de la CaracterÝstica podrÝa usarse, pero requiere algo de manipulaci¾n algebraica para llegar a la ecuaci¾n caracterÝstica, lo que lo hace menos intuitivo que el ßrbol de recursi¾n en este caso.
+
+**3. Anßlisis con el ┴rbol de Recursi¾n:**
+
+*   **Estructura del ┴rbol:** El ßrbol de recursi¾n tiene una estructura binaria. Cada nodo representa una llamada a la funci¾n `Fibonacci(n)`.  Un nodo tiene dos hijos: `Fibonacci(n-1)` y `Fibonacci(n-2)`.
+*   **Profundidad del ┴rbol:** La profundidad del ßrbol estß relacionada con el valor de `n`.  El camino mßs largo hasta una hoja es de longitud `n`. El camino mßs corto tiene aproximadamente una longitud de `n/2`.
+*   **N·mero de Nodos:** AquÝ estß el punto crÝtico. El n·mero de nodos en el ßrbol crece exponencialmente.  Es significativamente mayor que un ßrbol binario completo debido a la diferencia en el tama±o de los subproblemas (n-1 y n-2).  El n·mero de nodos estß relacionado con la secuencia de Fibonacci misma.
+*   **Costo por Nodo:** El costo por nodo (excluyendo las llamadas recursivas) es constante, O(1), ya que se realiza una comparaci¾n simple y una suma.
+
+**4. Conclusi¾n Final: Complejidad**
+
+*   **Peor Caso (O):** El peor caso ocurre cuando el ßrbol de recursi¾n estß completamente expandido. El n·mero de nodos en el ßrbol es aproximadamente proporcional a  `O(2^n)`.  Mßs precisamente, el n·mero de nodos es de orden `O(?^n)` donde ? es la raz¾n ßurea (aproximadamente 1.618).  Sin embargo, la notaci¾n `O(2^n)` es una cota superior vßlida y com·nmente utilizada para simplificar la expresi¾n. Por lo tanto: `O(2^n)`.
+
+*   **Mejor Caso (?):**  En realidad, el "mejor caso" en tÚrminos de complejidad no es significativamente diferente del peor caso. La estructura de la recursi¾n siempre genera el mismo ßrbol de llamadas (aunque los valores de n puedan llevar a retornos rßpidos si n <= 1).  Formalmente,  `?(2^n)`.
+
+*   **Promedio (?):** El caso promedio es similar al peor caso.  La estructura del ßrbol de recursi¾n es inherentemente exponencial independientemente de los valores de entrada, por lo que `?(2^n)`.
+
+**Resumen:**
+
+*   **Tipo:** Recursivo
+*   **MÚtodo de Anßlisis:** ┴rbol de Recursi¾n
+*   **Peor Caso (O):** O(2^n)
+*   **Mejor Caso (?):** ?(2^n)
+*   **Promedio (?):** ?(2^n)
+
+**Justificaci¾n de la Complejidad Exponencial:**
+
+La complejidad exponencial se debe a la **recomputaci¾n masiva de los mismos valores**. Por ejemplo, `Fibonacci(n-2)` se calcula no solo una vez, sino m·ltiples veces, desde diferentes ramas del ßrbol de recursi¾n. Esta redundancia es lo que hace que el algoritmo sea ineficiente.
+
+**Observaciones Adicionales:**
+
+*   La implementaci¾n recursiva de Fibonacci es un ejemplo clßsico de un algoritmo con complejidad exponencial.
+*   Para calcular n·meros de Fibonacci de manera eficiente, se deben utilizar tÚcnicas como la programaci¾n dinßmica (memoization o tabulaci¾n) que reducen la complejidad a O(n).
+*   La complejidad espacial de la versi¾n recursiva es O(n) debido a la pila de llamadas recursivas.
+
+--- 4. Generando Trace Table ---
+
+Anßlisis finalizado.

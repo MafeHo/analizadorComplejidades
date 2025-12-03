@@ -1,2 +1,0 @@
-﻿Syntax Error at line 3:7 - no viable alternative at input 'if('
-Parsing complete.

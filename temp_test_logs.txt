@@ -1,7 +1,0 @@
-
-ALGORITMO Test(n)
-    FOR i = 1 TO n DO
-        x = x + 1
-    ENDFOR
-    RETURN x
-FIN
