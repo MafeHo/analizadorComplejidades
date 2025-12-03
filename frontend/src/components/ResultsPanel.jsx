@@ -86,7 +86,12 @@ const ResultsPanel = ({ data, loading, error }) => {
                             <p><strong>📌 ALGORITMO:</strong> {data.algorithm_name || "Desconocido"}</p>
                             <p><strong>✅ COMPLEJIDAD FINAL:</strong> <span dangerouslySetInnerHTML={{ __html: finalComp }} /></p>
                             <p><strong>🧮 Calculado (Raw):</strong> {compCalculated}</p>
-                            <p><strong>🤖 Validado (LLM):</strong> {compValidated}</p>
+                            <p>
+                                <strong>🤖 Validado (LLM):</strong>
+                                <span style={{ color: compValidated.includes('Error') ? '#ef4444' : 'inherit', marginLeft: '5px' }}>
+                                    {compValidated}
+                                </span>
+                            </p>
 
                             <h4 style={{ marginTop: '1rem' }}>📋 ANÁLISIS POR LÍNEAS:</h4>
                             <div className="log-output" style={{ background: 'rgba(0,0,0,0.3)', padding: '10px', borderRadius: '5px' }}>

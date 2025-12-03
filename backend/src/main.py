@@ -176,10 +176,14 @@ def analyze_algorithm(filepath, translate_mode=False):
             elif "Omega" in comp_str:
                 analysis_summary["case_best"] = comp_str
 
+        # Si el LLM devolvió error, mostrarlo
+        if "Error" in llm_validation and analysis_summary["complexity_validated"] == "Desconocida":
+             analysis_summary["complexity_validated"] = llm_validation
+
         # Lógica de respaldo para casos (si LLM falla o es inconsistente)
         # Si tenemos una complejidad calculada y validada fuerte, usémosla
         final_comp = analysis_summary.get("complexity_validated", "Desconocida")
-        if final_comp == "Desconocida":
+        if final_comp == "Desconocida" or "Error" in final_comp:
             final_comp = analysis_summary.get("complexity_calculated", "Desconocida")
             
         # Si es recursivo (detectado por T(n) o explicación), los casos suelen ser iguales

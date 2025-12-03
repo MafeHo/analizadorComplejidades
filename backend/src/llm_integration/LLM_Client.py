@@ -2,61 +2,97 @@
 
 import os
 from dotenv import load_dotenv
-from google import genai
-from google.genai.errors import APIError
+import google.generativeai as genai
 import time
+import socket
 
 class LLMClient:
     def __init__(self):
         # Cargar la clave API del archivo .env
         load_dotenv()
         api_key = os.getenv("GEMINI_API_KEY")
+        
+        self.total_tokens_used = 0
+        self.model_name = "gemini-1.5-flash" # Default fallback
+        self.model = None
+        
         if not api_key:
-            print("⚠️ ADVERTENCIA: GEMINI_API_KEY no encontrada. El análisis teórico fallará.")
-            self.client = None
-        else:
+            print("Error: GEMINI_API_KEY no encontrada en .env")
+            return
+
+        try:
+            # Check connection first to avoid hanging on configure if DNS fails
+            if not self._check_connection():
+                print("Advertencia: Sin conexión a Internet. Modo Offline.")
+                return
+
+            genai.configure(api_key=api_key)
+            
+            # Selección dinámica del modelo
+            available_models = []
             try:
-                # Inicializar el cliente
-                self.client = genai.Client(api_key=api_key)
-                self.model = 'gemini-2.0-flash' # Usamos Flash por velocidad/costo
-                self.total_tokens_used = 0
-                
-                # Contexto teórico "Hardcoded" basado en los apuntes de clase.
-                # Esto fuerza al modelo a pensar como la profesora.
-                self.theoretical_context = (
-                    "ERES UN EXPERTO EN ANÁLISIS DE ALGORITMOS (Cátedra Universitaria).\n"
-                    "Debes usar ESTRICTAMENTE los siguientes métodos según aplique:\n"
-                    "1. TEOREMA MAESTRO: Para T(n) = aT(n/b) + f(n). Verifica regularidad (Caso 3).\n"
-                    "2. ECUACIÓN CARACTERÍSTICA: Para lineales homogéneas (ej. Fibonacci T(n) = T(n-1) + T(n-2)). Hallar raíces.\n"
-                    "3. MÉTODO DEL ÁRBOL/ITERACIÓN: Si es 'Resta y Vencerás' (T(n) = T(n-1) + C) o irregular.\n"
-                    "4. SUMATORIAS: Para ciclos iterativos. Recuerda que la cabecera del FOR se ejecuta n+1 veces."
-                )
-                
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        available_models.append(m.name)
             except Exception as e:
-                print(f"Error al inicializar el cliente Gemini: {e}")
-                self.client = None
+                print(f"Error listando modelos: {e}")
+
+            # Priorizar gemini-1.5-flash, luego gemini-pro, luego el primero que haya
+            if 'models/gemini-1.5-flash' in available_models:
+                self.model_name = 'models/gemini-1.5-flash'
+            elif 'models/gemini-pro' in available_models:
+                self.model_name = 'models/gemini-pro'
+            elif available_models:
+                self.model_name = available_models[0]
+            else:
+                print("Advertencia: No se encontraron modelos disponibles. Intentando default.")
+                self.model_name = 'gemini-1.5-flash'
+
+            print(f"Usando modelo: {self.model_name}")
+            self.model = genai.GenerativeModel(self.model_name)
+            
+            self.theoretical_context = (
+                "Debes usar ESTRICTAMENTE los siguientes métodos según aplique:\n"
+                "1. TEOREMA MAESTRO: Para T(n) = aT(n/b) + f(n). Verifica regularidad (Caso 3).\n"
+                "2. ECUACIÓN CARACTERÍSTICA: Para lineales homogéneas (ej. Fibonacci T(n) = T(n-1) + T(n-2)). Hallar raíces.\n"
+                "3. MÉTODO DEL ÁRBOL/ITERACIÓN: Si es 'Resta y Vencerás' (T(n) = T(n-1) + C) o irregular.\n"
+                "4. SUMATORIAS: Para ciclos iterativos. Recuerda que la cabecera del FOR se ejecuta n+1 veces."
+            )
+        except Exception as e:
+            print(f"Error al inicializar el cliente Gemini: {e}")
+            self.model = None
+
+    def _check_connection(self):
+        try:
+            # Intentar resolver google.com para verificar DNS/Internet
+            socket.create_connection(("www.google.com", 80), timeout=2)
+            return True
+        except OSError:
+            return False
 
     def _send_prompt(self, prompt: str, system_instr: str = None) -> str:
         """Función interna con lógica de reintento (Exponential Backoff)."""
-        if not self.client:
-            return "Error: Cliente LLM no configurado."
+        if not self._check_connection():
+            return "Error: Sin conexión a Internet. (Modo Offline)"
+
+        if not self.model:
+            return "Error: Cliente LLM no configurado o API Key inválida."
         
         max_retries = 3
         wait_time = 2
         
-        # Si no se pasa instrucción de sistema específica, se usa la teórica por defecto
-        active_sys_instr = system_instr if system_instr else self.theoretical_context
+        final_prompt = prompt
+        if system_instr:
+             final_prompt = f"INSTRUCCIÓN DEL SISTEMA: {system_instr}\n\n{prompt}"
+        else:
+             final_prompt = f"INSTRUCCIÓN DEL SISTEMA: {self.theoretical_context}\n\n{prompt}"
 
         for attempt in range(max_retries):
             try:
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config={'system_instruction': active_sys_instr}
-                )
+                response = self.model.generate_content(final_prompt)
                 
-                if response.usage_metadata:
-                    self.total_tokens_used += response.usage_metadata.total_token_count
+                if hasattr(response, 'usage_metadata'):
+                     self.total_tokens_used += response.usage_metadata.total_token_count
                 
                 return response.text.strip()
                 
@@ -98,7 +134,6 @@ class LLMClient:
             "4. Conclusión Final: Complejidad en Peor Caso (O), Mejor Caso (Ω) y Promedio (Θ).\n\n"
             f"CÓDIGO:\n```\n{algorithm_pseudocode}\n```"
         )
-        # Aquí usamos una instrucción de sistema más explicativa
         sys_instr = "Eres un profesor evaluando un proyecto de algoritmos. Sé técnico y preciso."
         return self._send_prompt(prompt, system_instr=sys_instr)
 
