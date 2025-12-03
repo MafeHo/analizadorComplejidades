@@ -1,27 +1,28 @@
 ```pseudocode
-Algoritmo Seleccion(A, n)
-begin
-    // Recorre el arreglo desde la primera posición hasta la penúltima (n-1)
-    for i <- 1 to n-1 do begin
-        // Inicializa 'min' con el índice de la posición actual, asumiendo que es el menor
-        min <- i;
+// Algoritmo Seleccion: Implementa el ordenamiento por selección.
+// Recibe un arreglo A de tamaño n.
+Algoritmo Seleccion(A, n) begin
+  // Recorre el arreglo desde la primera posición hasta la penúltima.
+  for i <- 1 to n-1 do begin
+    // Asume que el elemento actual es el mínimo en la parte no ordenada.
+    min <- i;
 
-        // Busca el número más pequeño en la parte no ordenada del arreglo
-        // (desde la posición actual + 1 hasta el final)
-        for j <- i+1 to n do begin
-            If (A[j] < A[min]) then begin
-                // Si encuentra un elemento menor, actualiza el índice de 'min'
-                min <- j;
-            end;
-        end;
-
-        // Si el elemento más pequeño encontrado no está en la posición actual, intercámbialos
-        If (min != i) then begin
-            // Usa una variable temporal para realizar el intercambio
-            temp <- A[i];
-            A[i] <- A[min];
-            A[min] <- temp;
-        end;
+    // Busca el número más pequeño en la parte no ordenada del arreglo
+    // (desde la posición actual + 1 hasta el final).
+    for j <- i + 1 to n do begin
+      If (A[j] < A[min]) then begin
+        min <- j;
+      end;
     end;
+
+    // Intercambia el elemento más pequeño encontrado con la posición actual,
+    // si el mínimo no está ya en la posición correcta.
+    If (min != i) then begin
+      // Usa una variable temporal para realizar el intercambio.
+      temp <- A[i];
+      A[i] <- A[min];
+      A[min] <- temp;
+    end;
+  end;
 end;
 ```

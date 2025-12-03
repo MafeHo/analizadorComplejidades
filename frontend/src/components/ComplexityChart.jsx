@@ -37,19 +37,21 @@ const ComplexityChart = ({ complexity }) => {
     else if (c_lower.includes("1") && !c_lower.includes("n")) color = '#FFC300';
 
     return (
-        <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-                <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                    <CartesianGrid stroke="#444" strokeDasharray="3 3" />
-                    <XAxis dataKey="n" stroke="#888" />
-                    <YAxis stroke="#888" />
-                    <Tooltip
-                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                        itemStyle={{ color: color }}
-                    />
-                    <Line type="monotone" dataKey="value" stroke={color} strokeWidth={3} dot={{ r: 4 }} />
-                </LineChart>
-            </ResponsiveContainer>
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid stroke="#444" strokeDasharray="3 3" />
+                        <XAxis dataKey="n" stroke="#888" />
+                        <YAxis stroke="#888" />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                            itemStyle={{ color: color }}
+                        />
+                        <Line type="monotone" dataKey="value" stroke={color} strokeWidth={3} dot={{ r: 4 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
             <div style={{ textAlign: 'center', color: color, marginTop: '10px', fontWeight: 'bold' }}>
                 {complexity}
             </div>
