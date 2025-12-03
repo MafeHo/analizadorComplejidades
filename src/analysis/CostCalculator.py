@@ -31,10 +31,16 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
             return Integer(0)
         return super().visit(tree)
 
-    def _log_step(self, ctx, cost):
+    def _log_step(self, ctx, cost, details=None):
         if hasattr(ctx, 'start'):
             cost_str = str(cost).replace("**", "^")
-            self.line_logs.append({"line": ctx.start.line, "cost": cost_str})
+            if details:
+                # Limpieza visual
+                details = str(details).replace("**", "^")
+                log_entry = f"OE: {details} -> {cost_str}"
+            else:
+                log_entry = f"OE: {cost_str} -> {cost_str}"
+            self.line_logs.append({"line": ctx.start.line, "cost": log_entry})
 
     def visitProgram(self, ctx:PseudoCodeAnalyzerParser.ProgramContext):
         algo_ctx = ctx.algorithm_definition()
@@ -152,7 +158,11 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         end = self.visit(ctx.expression(1))
         body_cost = self.visit(ctx.statement_list())
         total = self.math.sum_loop(body_cost, var, start, end)
-        self._log_step(ctx, f"Sumatoria {var}={start}..{end}")
+        
+        # OE: Iteraciones * Cuerpo
+        iters = (end - start + 1)
+        details = f"Sum({var}={start}..{end}) [{iters} iter] * ({body_cost})"
+        self._log_step(ctx, total, details=details)
         return total
 
     def visitWhile_loop(self, ctx:PseudoCodeAnalyzerParser.While_loopContext):
@@ -165,7 +175,9 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         header_cost = iters + 1
         body_cost = self.visit(ctx.statement_list())
         total = (body_cost * iters) + header_cost
-        self._log_step(ctx, total)
+        
+        details = f"{iters} iter * ({body_cost}) + Header"
+        self._log_step(ctx, total, details=details)
         return total
 
     def visitIf_statement(self, ctx:PseudoCodeAnalyzerParser.If_statementContext):
@@ -185,7 +197,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
                      self.base_conditions.append(ctx.expression().getText())
 
         total = cond + Max(then_c, else_c)
-        self._log_step(ctx, total)
+        self._log_step(ctx, total, details=f"Max({then_c}, {else_c}) + {cond}")
         return total
 
     def visitReturn_statement(self, ctx:PseudoCodeAnalyzerParser.Return_statementContext):
@@ -196,7 +208,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         if hasattr(val, 'has') and val.has(self.math.T):
             # Costo = calcular recursión + 1 retorno
             total = val + 1
-            self._log_step(ctx, total)
+            self._log_step(ctx, total, details=f"Return Recursion: {val} + 1")
             return total
             
         # Si es un valor simple (n), el costo es O(1) + operaciones
@@ -212,7 +224,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         # Si la expresión contiene una llamada recursiva T(...), el costo es esa recursión + asignación
         if hasattr(val, 'has') and val.has(self.math.T):
             cost = val + 1
-            self._log_step(ctx, cost)
+            self._log_step(ctx, cost, details=f"Assign Recursion: {val} + 1")
             return cost
 
         cost = self._count_ops_in_expr(ctx.expression()) + 1
@@ -234,12 +246,12 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
                 new_size = self.visit(args[0])
             
             cost = self.math.T(new_size)
-            self._log_step(ctx, cost)
+            self._log_step(ctx, cost, details=f"Recurrencia: T({new_size})")
             return cost
         
         # External call cost
         cost = Integer(1)
-        self._log_step(ctx, cost)
+        self._log_step(ctx, cost, details="External Call")
         return cost
 
     # --- VISITORS DE EXPRESIONES ---
