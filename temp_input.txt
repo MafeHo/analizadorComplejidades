@@ -1,0 +1,19 @@
+// QuickSort (Apuntes - Mejor Caso)
+QuickSort(n)
+begin
+    If (n > 1) then
+    begin
+        // Partition toma tiempo lineal O(n)
+        pivote <- 0;
+        while (pivote < n) do
+        begin
+            pivote <- pivote + 1;
+        end;
+        
+        mitad <- n / 2;
+        
+        // Dos llamadas recursivas
+        CALL QuickSort(mitad);
+        CALL QuickSort(mitad);
+    end;
+end

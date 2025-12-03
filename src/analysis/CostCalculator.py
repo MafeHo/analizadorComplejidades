@@ -2,251 +2,317 @@
 
 from ..parsing.PseudoCodeAnalyzerVisitor import PseudoCodeAnalyzerVisitor
 from ..parsing.PseudoCodeAnalyzerParser import PseudoCodeAnalyzerParser
-from ..llm_integration.LLM_Client import LLMClient
+from .MathEngine import MathEngine
+from sympy import Integer, Symbol, Max, ceiling, floor
 
 class AnalysisResult:
-    def __init__(self, worst_case=None, line_analysis=None):
+    def __init__(self, worst_case=None, line_analysis=None, recurrence_eq=None, master_theorem_data=None, explanation=None):
         self.worst_case = worst_case
         self.line_analysis = line_analysis if line_analysis else []
+        self.recurrence_eq = recurrence_eq
+        self.master_theorem_data = master_theorem_data
+        self.explanation = explanation
 
 class CostCalculator(PseudoCodeAnalyzerVisitor):
-    def __init__(self, llm_client):
-        self.llm_client = llm_client 
+    def __init__(self):
+        self.math = MathEngine()
+        self.variables = {} 
         self.current_algorithm_name = None 
         self.is_recursive = False
-        self.line_logs = [] # Lista para guardar el análisis línea por línea
+        self.line_logs = [] 
+        self.raw_equation = None 
+        self.temp_master_data = None
+        self.explanation = None
+        self.base_conditions = [] 
+        
+    def visit(self, tree):
+        """Override visit to handle None trees gracefully (e.g. syntax errors)."""
+        if tree is None:
+            return Integer(0)
+        return super().visit(tree)
 
-    # Método auxiliar para registrar el costo de una línea específica
     def _log_step(self, ctx, cost):
-        if ctx and hasattr(ctx, 'start'):
-            line_num = ctx.start.line
-            self.line_logs.append({
-                "line": line_num,
-                "cost": str(cost)
-            })
+        if hasattr(ctx, 'start'):
+            cost_str = str(cost).replace("**", "^")
+            self.line_logs.append({"line": ctx.start.line, "cost": cost_str})
 
-    # -------------------------------------------------------------
-    # MÉTODO RAÍZ (PROGRAM)
-    # -------------------------------------------------------------
     def visitProgram(self, ctx:PseudoCodeAnalyzerParser.ProgramContext):
-        final_cost = "0"
-        # Analizamos la primera subrutina encontrada
-        if ctx.subroutine_declaration(0):
-            final_cost = self.visit(ctx.subroutine_declaration(0)).worst_case
+        algo_ctx = ctx.algorithm_definition()
+        complexity_result = self.visit(algo_ctx)
         
-        return AnalysisResult(worst_case=final_cost, line_analysis=self.line_logs)
+        final_str = str(complexity_result)
+        if hasattr(self.math, 'format_complexity'):
+            raw_str = str(complexity_result).replace("**", "^")
+            formatted_str = self.math.format_complexity(complexity_result)
+            
+            # Asegurar que formatted_str tenga Theta u O
+            if "Theta" not in formatted_str and "O(" not in formatted_str:
+                formatted_str = f"Theta({formatted_str})"
 
-    # -------------------------------------------------------------
-    # MÉTODO PRINCIPAL (SUBRUTINA)
-    # -------------------------------------------------------------
-    def visitSubroutine_declaration(self, ctx:PseudoCodeAnalyzerParser.Subroutine_declarationContext):
+            # Solo mostrar ambos si son diferentes y no es un error
+            if raw_str != formatted_str and "Unknown" not in raw_str:
+                final_str = f"{raw_str} = {formatted_str}"
+            else:
+                final_str = formatted_str
+
+        return AnalysisResult(
+            worst_case=final_str, 
+            line_analysis=self.line_logs,
+            recurrence_eq=self.raw_equation,
+            master_theorem_data=self.temp_master_data,
+            explanation=self.explanation
+        )
+
+    def visitAlgorithm_definition(self, ctx:PseudoCodeAnalyzerParser.Algorithm_definitionContext):
         self.current_algorithm_name = ctx.ID().getText()
+        print(f"Analizando: {self.current_algorithm_name}")
+        
+        self.variables = {}
         self.is_recursive = False
-        print(f"  > Analizando subrutina: {self.current_algorithm_name}")
+        self.line_logs = []
+        self.raw_equation = None 
+        self.temp_master_data = None
+        self.explanation = None
+        self.base_conditions = [] 
         
-        body_cost_str = "0"
-        if ctx.statement_list(): 
-            body_cost_str = self.visit(ctx.statement_list())
-        
-        final_cost_description = ""
-        
-        if self.is_recursive:
-            # Si es recursivo, enviamos la ecuación completa T(n) = ...
-            # El LLM decidirá si usa Teorema Maestro, Árbol o Iteración
-            recurrence_relation = f"T(n) = {body_cost_str}"
-            print(f"  > Relación de Recurrencia detectada: {recurrence_relation}")
-            print("  > Solicitando resolución de recurrencia al LLM...")
-            
-            llm_response = self.llm_client.solve_equation(
-                "relación de recurrencia", 
-                recurrence_relation
-            )
-            final_cost_description = llm_response
-            
-        else:
-            # Si es iterativo (Sumatorias)
-            print(f"  > Costo Iterativo (T(n)): {body_cost_str}")
-            final_cost_description = body_cost_str
-
-        self.current_algorithm_name = None
-        print(f"  > Costo T(n) preliminar para {ctx.ID().getText()}: {final_cost_description}")
-        
-        return AnalysisResult(worst_case=final_cost_description)
-
-    # -------------------------------------------------------------
-    # LISTA DE SENTENCIAS (Suma de costos)
-    # -------------------------------------------------------------
-    def visitStatement_list(self, ctx:PseudoCodeAnalyzerParser.Statement_listContext):
-        total_cost = []
-        for statement_ctx in ctx.statement():
-            # Visitamos cada sentencia
-            costo_sentencia = self.visit(statement_ctx)
-            # Si por alguna razón devuelve None (error), lo tratamos como "0"
-            if costo_sentencia is None:
-                costo_sentencia = "0"
-            total_cost.append(str(costo_sentencia))
-            
-        if not total_cost:
-            return "0"
-        
-        return " + ".join(total_cost)
-
-    # -------------------------------------------------------------
-    # ASIGNACIÓN (O(1) o Recursiva)
-    # -------------------------------------------------------------
-    def visitAssignment(self, ctx:PseudoCodeAnalyzerParser.AssignmentContext):
-        cost_of_expression = self.visit(ctx.expression())
-        
-        final_cost = "1"
-        # Si la expresión tiene T(...) es recursiva, propagamos ese costo
-        if "T(" in str(cost_of_expression):
-             final_cost = cost_of_expression
-        elif str(cost_of_expression).isdigit():
-             final_cost = "1"
-        else:
-             final_cost = f"(1 + {cost_of_expression})"
-        
-        self._log_step(ctx, final_cost)
-        return final_cost
-
-    # -------------------------------------------------------------
-    # CONTROL DE FLUJO: IF / ELSE
-    # -------------------------------------------------------------
-    def visitIf_statement(self, ctx:PseudoCodeAnalyzerParser.If_statementContext):
-        cost_condition = "1"
-        
-        # Calculamos costo del bloque THEN
-        cost_then = "0"
-        if ctx.statement_list(0):
-            cost_then = self.visit(ctx.statement_list(0))
-            
-        # Calculamos costo del bloque ELSE (si existe)
-        cost_else = "0"
-        if ctx.ELSE():
-            cost_else = self.visit(ctx.statement_list(1))
-            
-        # Construimos la expresión del peor caso: 1 + max(then, else)
-        final_cost = f"( {cost_condition} + max({cost_then}, {cost_else}) )"
-        
-        self._log_step(ctx, final_cost) 
-        return final_cost
-
-    # -------------------------------------------------------------
-    # CONTROL DE FLUJO: FOR LOOP (Sumatorias)
-    # -------------------------------------------------------------
-    def visitFor_loop(self, ctx:PseudoCodeAnalyzerParser.For_loopContext):
-        start_expr = self.visit(ctx.expression(0))
-        end_expr = self.visit(ctx.expression(1))
-        
-        # Obtenemos el costo del cuerpo del ciclo
-        cost_body = "0"
+        total_cost = Integer(0)
         if ctx.statement_list():
-            cost_body = self.visit(ctx.statement_list())
+            total_cost = self.visit(ctx.statement_list())
             
-        loop_var = ctx.ID().getText()
-        
-        # Creamos el prompt para el LLM
-        summation_expression = (
-            f"Por favor, resuelve la siguiente sumatoria y dame la complejidad asintótica (Theta, O, o Omega) "
-            f"simplificada.\n\n"
-            f"Sumatoria desde {loop_var} = {start_expr} hasta {end_expr} de [ {cost_body} ]\n\n"
-            f"Considera 'n' como la variable de tamaño de entrada principal. "
-            f"Otras variables (como 'i', si aparecen en los límites o el cuerpo) "
-            f"deben ser tratadas como variables de un ciclo externo."
-        )
+        if self.is_recursive:
+            # Split cost into recursive and base parts
+            rec_cost = self.math.get_recursive_part(total_cost)
+            base_cost = self.math.get_base_part(total_cost)
+            
+            # Format equation
+            rec_str = str(rec_cost).replace("**", "^")
+            
+            # Replace constant terms with O(1) for display
+            # Heuristic: if it ends with " + <number>", replace with " + O(1)"
+            import re
+            rec_str = re.sub(r'\s\+\s\d+$', ' + O(1)', rec_str)
+            
+            base_str = str(base_cost).replace("**", "^")
+            if base_cost.is_number:
+                base_str = "O(1)"
+            
+            cond_str = "Unknown"
+            if self.base_conditions:
+                # Format base conditions: T(0)=O(1), T(1)=O(1)
+                formatted_conditions = []
+                for cond in self.base_conditions:
+                    # Extract number from condition (e.g. n<=1 -> 1)
+                    nums = re.findall(r'\d+', cond)
+                    if nums:
+                        limit = int(nums[0])
+                        # Generate T(0)=O(1), T(1)=O(1) up to limit
+                        for i in range(limit + 1):
+                             formatted_conditions.append(f"T({i})=O(1)")
+                
+                if formatted_conditions:
+                    base_str = ", ".join(formatted_conditions)
+                else:
+                    cond_str = " OR ".join(self.base_conditions)
+                    base_str = f"Base case: {base_str} (Condition: {cond_str})"
+            else:
+                 base_str = f"Base case: {base_str}"
+            
+            eq_str = f"T(n) = {rec_str}, {base_str}"
+            print(f"Ecuacion detectada: {eq_str}")
+            self.raw_equation = eq_str
+            
+            # Resolver recurrencia
+            solved_data = self.math.solve_recurrence(total_cost)
+            
+            # Generar explicacion
+            self.explanation = self.math.explain_recurrence(solved_data, eq_str)
+            
+            complexity = solved_data
+            if isinstance(solved_data, dict):
+                complexity = solved_data.get("complexity")
+                self.temp_master_data = solved_data.get("details")
+            
+            return complexity
+        else:
+            # Iterative explanation
+            self.explanation = self.math.explain_iterative(total_cost)
+            return total_cost
 
-        print(f"  > Solicitando resolución de sumatoria al LLM (Límites: {loop_var}={start_expr} a {end_expr})...")
-        llm_response = self.llm_client.solve_equation("sumatoria", summation_expression)
-        
-        self._log_step(ctx, llm_response)
-        return llm_response
+    def visitStatement_list(self, ctx:PseudoCodeAnalyzerParser.Statement_listContext):
+        cost = Integer(0)
+        for stmt in ctx.statement():
+            c = self.visit(stmt)
+            if c: cost += c
+        return cost
 
-    # -------------------------------------------------------------
-    # CONTROL DE FLUJO: WHILE LOOP (Aproximación)
-    # -------------------------------------------------------------
+    # --- CONTROL DE FLUJO ---
+    def visitFor_loop(self, ctx:PseudoCodeAnalyzerParser.For_loopContext):
+        var = ctx.ID().getText()
+        start = self.visit(ctx.expression(0))
+        end = self.visit(ctx.expression(1))
+        body_cost = self.visit(ctx.statement_list())
+        total = self.math.sum_loop(body_cost, var, start, end)
+        self._log_step(ctx, f"Sumatoria {var}={start}..{end}")
+        return total
+
     def visitWhile_loop(self, ctx:PseudoCodeAnalyzerParser.While_loopContext):
-        cost_body = self.visit(ctx.statement_list())
-        condition = ctx.expression().getText() # Texto crudo de la condición
+        body_str = ctx.statement_list().getText()
+        iters = self.math.n 
+        if "*" in body_str or "/" in body_str or "div" in body_str:
+            from sympy import log
+            iters = log(self.math.n, 2)
         
-        # Preguntamos al LLM la complejidad aproximada basándonos en la condición y el cuerpo
-        prompt = (
-            f"Dada un bucle WHILE con condición '{condition}' y un costo del cuerpo de '{cost_body}', "
-            f"¿Cuál es la complejidad asintótica aproximada? Responde solo con la notación (ej. O(log n), O(n))."
-        )
-        llm_response = self.llm_client.solve_equation("complejidad while", prompt)
-        
-        self._log_step(ctx, llm_response)
-        return llm_response
+        header_cost = iters + 1
+        body_cost = self.visit(ctx.statement_list())
+        total = (body_cost * iters) + header_cost
+        self._log_step(ctx, total)
+        return total
 
-    # -------------------------------------------------------------
-    # LLAMADA A SUBRUTINA (CALL)
-    # -------------------------------------------------------------
-    def visitCall_statement(self, ctx:PseudoCodeAnalyzerParser.Call_statementContext):
-        called_name = ctx.ID().getText()
+    def visitIf_statement(self, ctx:PseudoCodeAnalyzerParser.If_statementContext):
+        cond = self._count_ops_in_expr(ctx.expression())
+        then_c = self.visit(ctx.statement_list(0))
+        else_c = self.visit(ctx.statement_list(1)) if ctx.ELSE() else Integer(0)
         
-        # Verificar si es una llamada recursiva (se llama a sí mismo)
-        if called_name == self.current_algorithm_name:
-            print(f"  > ¡Recursión detectada (CALL)!: {called_name}")
+        # Detect base case condition
+        then_has_T = hasattr(then_c, 'has') and then_c.has(self.math.T)
+        else_has_T = hasattr(else_c, 'has') and else_c.has(self.math.T)
+        
+        if self.current_algorithm_name: # Only if inside algorithm
+             if not then_has_T:
+                 # Potential base case
+                 # Check if it looks like a base case check (involves n)
+                 if "n" in ctx.expression().getText():
+                     self.base_conditions.append(ctx.expression().getText())
+
+        total = cond + Max(then_c, else_c)
+        self._log_step(ctx, total)
+        return total
+
+    def visitReturn_statement(self, ctx:PseudoCodeAnalyzerParser.Return_statementContext):
+        # Visitamos la expresión para ver si hay recursión T(n) dentro
+        val = self.visit(ctx.expression())
+        
+        # Si el valor retornado contiene un costo recursivo T(...), retornamos ese costo
+        if hasattr(val, 'has') and val.has(self.math.T):
+            # Costo = calcular recursión + 1 retorno
+            total = val + 1
+            self._log_step(ctx, total)
+            return total
+            
+        # Si es un valor simple (n), el costo es O(1) + operaciones
+        cost = self._count_ops_in_expr(ctx.expression()) + 1
+        self._log_step(ctx, cost)
+        return cost
+
+    def visitAssignment(self, ctx:PseudoCodeAnalyzerParser.AssignmentContext):
+        val = self.visit(ctx.expression())
+        var = ctx.target_var().getText()
+        if "[" not in var: self.variables[var] = val
+        
+        # Si la expresión contiene una llamada recursiva T(...), el costo es esa recursión + asignación
+        if hasattr(val, 'has') and val.has(self.math.T):
+            cost = val + 1
+            self._log_step(ctx, cost)
+            return cost
+
+        cost = self._count_ops_in_expr(ctx.expression()) + 1
+        self._log_step(ctx, cost)
+        return cost
+
+    def visitCall_statement(self, ctx:PseudoCodeAnalyzerParser.Call_statementContext):
+        func_name = ctx.ID().getText()
+        
+        # Check for recursion
+        if func_name == self.current_algorithm_name:
             self.is_recursive = True
             
-            param_str = "n"
-            # Intentamos obtener el parámetro que cambia (ej. mitad)
-            if ctx.expression():
-                # Tomamos el último parámetro como heurística
-                param_str = self.visit(ctx.expression()[-1])
+            # Get argument
+            args = ctx.expression()
+            new_size = self.math.n
+            if args:
+                # Visit first arg to resolve variables (e.g. n/2)
+                new_size = self.visit(args[0])
             
-            cost = f"T({param_str})"
+            cost = self.math.T(new_size)
             self._log_step(ctx, cost)
             return cost
-            
-        else:
-            # Es una llamada externa (ej. print)
-            print(f"  > (Llamada a subrutina externa: {called_name})")
-            cost = "1"
-            self._log_step(ctx, cost)
-            return cost
+        
+        # External call cost
+        cost = Integer(1)
+        self._log_step(ctx, cost)
+        return cost
 
-    # -------------------------------------------------------------
-    # EXPRESIONES Y VARIABLES
-    # -------------------------------------------------------------
-    def visitVariable(self, ctx:PseudoCodeAnalyzerParser.VariableContext):
-        return ctx.getText()
-
-    def visitExpression(self, ctx:PseudoCodeAnalyzerParser.ExpressionContext):
-        # 1. Llamada a función dentro de expresión (ej. x <- FACTORIAL(n-1))
-        if ctx.ID() and ctx.LPAREN():
-            function_name = ctx.ID().getText()
+    # --- VISITORS DE EXPRESIONES ---
+    
+    def visitExprAtom(self, ctx:PseudoCodeAnalyzerParser.ExprAtomContext):
+        # Verificamos si es una llamada a función: ID ( ... )
+        atom_ctx = ctx.atom()
+        
+        # ANTLR guarda tokens hijos. Si hay LPAREN, es llamada o acceso.
+        if atom_ctx.LPAREN():
+            func_name = atom_ctx.ID().getText()
             
-            if function_name == self.current_algorithm_name:
-                print(f"  > ¡Recursión detectada (Expr)!: {function_name}")
+            # DETECCIÓN DE RECURSIÓN EN EXPRESIÓN (Fibonacci + Fibonacci)
+            if func_name == self.current_algorithm_name:
                 self.is_recursive = True
                 
-                param_str = "n"
-                if ctx.expression(0):
-                    param_str = self.visit(ctx.expression(0))
-                return f"T({param_str})"
-            else:
-                return "1" # Función externa es O(1)
-
-        # 2. Paréntesis
-        if ctx.LPAREN() and len(ctx.expression()) == 1:
-            return self.visit(ctx.expression(0))
-            
-        # 3. Terminales
-        if ctx.NUMBER(): return ctx.NUMBER().getText()
-        if ctx.variable(): return self.visit(ctx.variable())
+                # Obtener argumento. La gramática es: ID LPAREN (expr (, expr)*)? RPAREN
+                # atom context tiene el método expression() que devuelve lista
+                args = atom_ctx.expression()
+                new_size = self.math.n
+                if args:
+                    # Visitamos el primer argumento para resolver variables (ej: n-1)
+                    new_size = self.visit(args[0])
                 
-        # 4. Operaciones Binarias (+, -, *, /)
-        if len(ctx.expression()) == 2:
-            left = self.visit(ctx.expression(0))
-            right = self.visit(ctx.expression(1))
+                return self.math.T(new_size)
             
-            op = "+" 
-            if ctx.OP_MUL(): op = "*"
-            elif ctx.OP_DIV_REAL() or ctx.OP_DIV_ENTERA(): op = "/"
-            elif ctx.OP_SUB(): op = "-"
-            
-            # Devolvemos la expresión completa para que el LLM la analice
-            return f"({left} {op} {right})"
+            # Si es otra función, asumimos costo 1 por ahora
+            return Integer(1)
+
+        # Si no es función, es variable o número
+        txt = atom_ctx.getText()
+        if txt.isdigit(): return Integer(int(txt))
+        if txt == 'n': return self.math.n
+        if txt in self.variables: return self.variables[txt]
+        return Symbol(txt.split('[')[0])
+
+    def visitExprParen(self, ctx): return self.visit(ctx.expression())
+    
+    def visitExprAddSub(self, ctx):
+        try:
+            e0 = ctx.expression(0)
+            e1 = ctx.expression(1)
+            if e0 is None or e1 is None:
+                return Integer(0)
+                
+            l = self.visit(e0)
+            r = self.visit(e1)
+            # Si alguno es un costo recursivo T(...), sumamos los costos
+            # Si son valores, operamos aritméticamente
+            return l + r if ctx.OP_ADD() else l - r
+        except Exception as e:
+            print(f"Error in visitExprAddSub: {e}")
+            raise e
         
-        return ctx.getText()
+    def visitExprMulDiv(self, ctx):
+        l, r = self.visit(ctx.expression(0)), self.visit(ctx.expression(1))
+        if ctx.OP_MUL(): return l * r
+        if ctx.OP_DIV_REAL(): return l / r
+        return floor(l / r)
+
+    def visitExprCeil(self, ctx): return ceiling(self.visit(ctx.expression()))
+    def visitExprFloor(self, ctx): return floor(self.visit(ctx.expression()))
+    def visitExprRelational(self, ctx): return Integer(1)
+    def visitExprAnd(self, ctx): return Integer(1)
+    def visitExprOr(self, ctx): return Integer(1)
+    def visitExprNot(self, ctx): return Integer(1)
+
+    def _count_ops_in_expr(self, expr_ctx):
+        count = 0
+        if hasattr(expr_ctx, 'expression'):
+            exprs = expr_ctx.expression()
+            if isinstance(exprs, list):
+                for e in exprs: count += self._count_ops_in_expr(e)
+            elif exprs: count += self._count_ops_in_expr(exprs)
+        if expr_ctx.getChildCount() > 1: count += 1
+        return Integer(max(1, count))

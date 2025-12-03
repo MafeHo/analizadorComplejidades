@@ -1,0 +1,52 @@
+﻿
+============================================================
+INICIANDO SISTEMA DE ANALISIS ALGORITMICO
+============================================================
+
+--- 1. Anßlisis Estructural (ANTLR) ---
+Advertencia: Errores de sintaxis detectados (el anßlisis puede ser parcial).
+
+--- 2. Cßlculo de Costos (Visitor) ---
+Error en Visitor: 'NoneType' object has no attribute 'accept'
+
+--- 3. Validaci¾n Te¾rica (LLM) ---
+Okay, vamos a analizar el pseudoc¾digo proporcionado para el algoritmo de Fibonacci.
+
+**1. Identificaci¾n: Iterativo o Recursivo**
+
+El algoritmo `Fibonacci` se llama a sÝ mismo dentro de su definici¾n (`Fibonacci(n-1)` y `Fibonacci(n-2)`).  Por lo tanto, es **Recursivo**.
+
+**2. MÚtodo Te¾rico Aplicable (Recursivo)**
+
+Dado que tenemos una funci¾n recursiva que se divide en dos subproblemas de tama±o similar (n-1 y n-2),  el mÚtodo mßs adecuado para analizar su complejidad es el **Teorema del ┴rbol (Recursion Tree Method)**.  El teorema maestro y el mÚtodo caracterÝstico son menos apropiados en este caso debido a la naturaleza de la recurrencia (dos llamadas recursivas con diferentes tama±os de entrada).
+
+**Anßlisis usando el Teorema del ┴rbol (Recursion Tree Method):**
+
+* **┴rbol de Recursi¾n:** Cada nodo del ßrbol representa una llamada a `Fibonacci(n)`.  Cada nodo tiene dos hijos, representando `Fibonacci(n-1)` y `Fibonacci(n-2)`.
+* **Profundidad del ┴rbol:**  La profundidad del ßrbol es aproximadamente *n*.  Aunque las ramas no son perfectamente balanceadas (n-1 y n-2), la rama mßs larga tiene una longitud aproximada de *n*.
+* **N·mero de Nodos:**  El n·mero de nodos en el ßrbol es exponencial.  Una forma de visualizar esto es observar que cada llamada recursiva genera (en el peor caso) dos nuevas llamadas.  Por lo tanto, el n·mero de nodos crece aproximadamente como 2<sup>n</sup>.  Sin embargo, esta es una sobreestimaci¾n debido a la superposici¾n de cßlculos.  Un anßlisis mßs preciso revela que el n·mero de nodos estß relacionado con el n·mero de Fibonacci en sÝ mismo, que crece exponencialmente con una base cercana a la raz¾n ßurea (? ? 1.618).  Mßs precisamente, el n·mero de llamadas recursivas es proporcional a F<sub>n+1</sub>, donde F<sub>n+1</sub> es el (n+1)-Úsimo n·mero de Fibonacci.
+* **Trabajo por Nodo:** El trabajo realizado en cada nodo (sin contar las llamadas recursivas) es constante, O(1) (solo la comparaci¾n `n <= 1` y la posible suma).
+
+**Estimaci¾n de la Complejidad:**
+
+Dado que el n·mero de nodos en el ßrbol de recursi¾n crece exponencialmente y el trabajo por nodo es constante, la complejidad total es **exponencial**.  Mßs precisamente, es proporcional a F<sub>n+1</sub>, lo que implica que la complejidad es O(?<sup>n</sup>), donde ? es la raz¾n ßurea.
+
+**3.  N/A (No es un Algoritmo Iterativo)**
+
+**4. Conclusi¾n Final: Complejidad**
+
+*   **Peor Caso (O):** O(?<sup>n</sup>)  ? O(1.618<sup>n</sup>)  - Exponencial
+*   **Mejor Caso (?):** ?(1) -  Si `n <= 1`, el algoritmo retorna inmediatamente.
+*   **Promedio (?):**  ?(?<sup>n</sup>) ? ?(1.618<sup>n</sup>)  - Exponencial.  El costo no varÝa significativamente seg·n la entrada *n*.
+
+**Observaciones Adicionales y CrÝticas:**
+
+*   **Ineficiencia:** Esta implementaci¾n recursiva bßsica del algoritmo de Fibonacci es extremadamente ineficiente debido a la **recomputaci¾n redundante**.  Por ejemplo, `Fibonacci(n-1)` y `Fibonacci(n-2)` calcularßn muchos de los mismos valores repetidamente. Esto es la causa principal de la complejidad exponencial.
+*   **Optimizaci¾n:** Para mejorar significativamente la eficiencia, se deben utilizar tÚcnicas como la **memoizaci¾n** (almacenar los resultados de los cßlculos para reutilizarlos) o la **programaci¾n dinßmica** (iterativamente construir la soluci¾n desde los casos base). Estas tÚcnicas pueden reducir la complejidad a O(n).
+*   **Alternativa Iterativa:** Existe una implementaci¾n iterativa sencilla del algoritmo de Fibonacci que tiene una complejidad O(n) en tiempo y O(1) en espacio, haciendo que la versi¾n recursiva sin memoizaci¾n sea casi siempre desaconsejable en la prßctica.
+
+En resumen, la versi¾n recursiva directa del algoritmo de Fibonacci, aunque conceptualmente simple, es un excelente ejemplo de un algoritmo con complejidad exponencial debido a la falta de optimizaci¾n.
+
+--- 4. Generando Trace Table ---
+
+Anßlisis finalizado.
