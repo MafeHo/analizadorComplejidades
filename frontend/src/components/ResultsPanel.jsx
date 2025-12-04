@@ -68,6 +68,41 @@ const ResultsPanel = ({ data, loading, error }) => {
 
     const traceData = parseTraceTable(data.trace_diagram);
 
+    // Custom formatter for explanation text
+    const formatExplanation = (text) => {
+        if (!text) return "No hay explicación detallada disponible.";
+
+        // Split by lines to handle headers properly
+        const lines = text.split('\n');
+
+        return lines.map((line, idx) => {
+            // Handle Headers
+            if (line.startsWith('#### ')) {
+                return <h4 key={idx} style={{ color: 'var(--accent-primary)', marginTop: '1rem', marginBottom: '0.5rem' }}>{line.replace('#### ', '')}</h4>;
+            }
+            if (line.startsWith('### ')) {
+                return <h3 key={idx} style={{ color: 'var(--text-primary)', marginTop: '1.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>{line.replace('### ', '')}</h3>;
+            }
+
+            // Handle Bold and Code formatting inline
+            const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g);
+
+            return (
+                <p key={idx} style={{ marginBottom: '0.5rem', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
+                    {parts.map((part, pIdx) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={pIdx} style={{ color: 'var(--text-primary)' }}>{part.slice(2, -2)}</strong>;
+                        }
+                        if (part.startsWith('`') && part.endsWith('`')) {
+                            return <code key={pIdx} style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', color: 'var(--accent-secondary)' }}>{part.slice(1, -1)}</code>;
+                        }
+                        return part;
+                    })}
+                </p>
+            );
+        });
+    };
+
     return (
         <div className="results-container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
 
@@ -92,14 +127,14 @@ const ResultsPanel = ({ data, loading, error }) => {
                     onClick={() => setActiveView('recurrence')}
                 >
                     <FunctionSquare size={18} />
-                    Recurrencia
+                    Tipo de Algoritmo
                 </button>
                 <button
                     className={`nav-btn ${activeView === 'info' ? 'active' : ''}`}
                     onClick={() => setActiveView('info')}
                 >
                     <Info size={18} />
-                    Info Extra
+                    Análisis
                 </button>
                 <button
                     className={`nav-btn ${activeView === 'trace' ? 'active' : ''}`}
@@ -168,10 +203,10 @@ const ResultsPanel = ({ data, loading, error }) => {
 
                 {activeView === 'recurrence' && (
                     <div className="view-content fade-in">
-                        <h3 className="section-title">Ecuación de Recurrencia</h3>
+                        <h3 className="section-title">Tipo de Algoritmo</h3>
 
                         <div style={{ marginBottom: '2rem' }}>
-                            <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Tipo de Algoritmo</h4>
+
                             <div style={{
                                 display: 'inline-block',
                                 padding: '0.5rem 1rem',
@@ -204,27 +239,59 @@ const ResultsPanel = ({ data, loading, error }) => {
 
                 {activeView === 'info' && (
                     <div className="view-content fade-in">
-                        <h3 className="section-title">Información Adicional</h3>
+                        <h3 className="section-title">Análisis</h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
                             <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-secondary)' }}>
                                 <CheckCircle size={18} />
                                 Explicación del Análisis
                             </h4>
-                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                                {data.explanation || data.validation_details || "No hay explicación detallada disponible."}
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '8px' }}>
+                                {formatExplanation(data.explanation || data.validation_details)}
                             </div>
                         </div>
 
                         {data.master_theorem_data && (
                             <div>
-                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-primary)' }}>
+                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-primary)', marginBottom: '1rem' }}>
                                     <FunctionSquare size={18} />
                                     Datos del Teorema Maestro
                                 </h4>
-                                <pre style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', overflowX: 'auto' }}>
-                                    {JSON.stringify(data.master_theorem_data, null, 2)}
-                                </pre>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                    <div className="case-card" style={{ padding: '1rem' }}>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Parámetros</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>a (subproblemas):</span>
+                                                <strong style={{ color: 'var(--accent-primary)' }}>{data.master_theorem_data.a}</strong>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span>b (división):</span>
+                                                <strong style={{ color: 'var(--accent-primary)' }}>{data.master_theorem_data.b}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="case-card" style={{ padding: '1rem' }}>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Costo de Combinación</div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>
+                                            f(n) = {data.master_theorem_data.f_n}
+                                        </div>
+                                    </div>
+
+                                    <div className="case-card" style={{ padding: '1rem', gridColumn: '1 / -1' }}>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Resultado</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#34d399' }}>
+                                                {finalComp}
+                                            </div>
+                                            <div style={{ padding: '0.25rem 0.75rem', background: 'rgba(52, 211, 153, 0.2)', borderRadius: '12px', color: '#34d399', fontSize: '0.9rem' }}>
+                                                Caso Aplicado
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

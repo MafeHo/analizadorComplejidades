@@ -1,14 +1,10 @@
-// Algoritmo MergeSort
-MERGE_SORT(A, n)
+// Suma Gauss
+SUMA_GAUSS(n)
 begin
-    If (n > 1) then
+    suma <- 0;
+    for i <- 1 to n do
     begin
-        mitad <- n / 2;
-        CALL MERGE_SORT(A, mitad);
-        CALL MERGE_SORT(A, mitad);
-        for i <- 1 to n do
-        begin
-            temp <- A[i];
-        end;
+        suma <- suma + i;
     end;
+    SUMA_GAUSS <- suma;
 end

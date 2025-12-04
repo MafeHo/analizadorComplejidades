@@ -1,25 +1,42 @@
-Hanoi(n)
+Seleccion(A, n)
 begin
-    // Caso base: Si no hay discos para mover, el número de movimientos es cero.
-    If (n = 0) then
+    // Recorrer el arreglo desde la primera posición hasta la penúltima
+    // El índice 'i' va desde 0 hasta n-2
+    i <- 0;
+    while (i < n - 1) do
     begin
-        return 0;
-    end
-    else
-    begin
-        // El algoritmo de las Torres de Hanói implica tres pasos recursivos:
-        // 1. Mover n-1 discos del pilar de origen al pilar auxiliar.
-        //    Esto se logra con una llamada recursiva a Hanoi(n-1).
-        
-        // 2. Mover el n-ésimo disco (el más grande) del pilar de origen al pilar destino.
-        //    Esto cuenta como 1 movimiento.
-        
-        // 3. Mover los n-1 discos del pilar auxiliar al pilar destino.
-        //    Esto se logra con otra llamada recursiva a Hanoi(n-1).
-        
-        // El total de movimientos es la suma de los movimientos de estos tres pasos.
-        // Se sigue la regla de no asignar llamadas recursivas a variables,
-        // usando las llamadas directamente en la expresión de retorno.
-        return Hanoi(n - 1) + 1 + Hanoi(n - 1);
+        // Usar la variable min_idx para guardar el índice del menor elemento
+        // Asumir que el elemento actual es el más pequeño
+        min_idx <- i;
+
+        // Buscar el número más pequeño en la parte no ordenada del arreglo
+        // (desde la posición actual+1 hasta el final)
+        // El índice 'j' va desde i+1 hasta n-1
+        j <- i + 1;
+        while (j < n) do
+        begin
+            // Si se encuentra un elemento más pequeño que el actual mínimo
+            If (A[j] < A[min_idx]) then
+            begin
+                // Actualizar el índice del elemento más pequeño
+                min_idx <- j;
+            end;
+            j <- j + 1;
+        end;
+
+        // Si el índice del menor elemento encontrado no es la posición actual
+        // (es decir, se encontró un elemento más pequeño)
+        If (min_idx = i) then
+        begin
+            // No es necesario intercambiar, el elemento ya está en su lugar
+        end
+        else
+        begin
+            // Intercambiar el elemento actual con el elemento más pequeño encontrado
+            temp <- A[i];
+            A[i] <- A[min_idx];
+            A[min_idx] <- temp;
+        end;
+        i <- i + 1;
     end;
 end;
