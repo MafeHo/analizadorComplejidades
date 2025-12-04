@@ -1,0 +1,9 @@
+TestSymbols(n)
+begin
+    i 🡨 0;
+    while (i < n) do
+    begin
+        i 🡨 i + 1; ► Incremento
+    end;
+    return i;
+end;

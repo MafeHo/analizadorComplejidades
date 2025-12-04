@@ -216,6 +216,8 @@ class LLMClient:
             "10. DOS PUNTOS: Prohibido ':' en todo el código.\n"
             "11. ARREGLOS: NO declares arreglos locales con []. Solo úsalos. PROHIBIDO '<- []'.\n"
             "12. OPTIMIZACIÓN: NO asignes llamadas recursivas a variables. Úsalas directo en el return (ej: return Fib(n-1) + Fib(n-2)).\n"
+            "13. LIMPIEZA: NO uses 'print', 'echo' ni cadenas de texto. El algoritmo debe ser puro (solo cálculo).\n"
+            "14. SÍMBOLOS ESPECIALES: Si ves '►', reemplázalo por '//' (comentario). Si ves '🡨', reemplázalo por '<-' (asignación).\n"
         )
         
         prompt = (
