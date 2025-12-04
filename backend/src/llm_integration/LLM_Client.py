@@ -121,6 +121,28 @@ class LLMClient:
         )
         return self._send_prompt(prompt)
 
+    def solve_recurrence_steps(self, recurrence_eq: str) -> str:
+        """
+        Resuelve la ecuación paso a paso (solo matemáticas).
+        """
+        prompt = (
+            f"Resuelve la siguiente ecuación de recurrencia paso a paso: {recurrence_eq}\n\n"
+            "REGLAS:\n"
+            "1. Muestra SOLO los pasos matemáticos de la sustitución o desarrollo.\n"
+            "2. NO incluyas texto explicativo (como 'Sustituimos...', 'Por lo tanto...').\n"
+            "3. Usa formato matemático limpio.\n"
+            "4. Si usas el método iterativo, muestra las iteraciones k=1, k=2, k=3.\n"
+            "5. Termina con la complejidad final.\n\n"
+            "EJEMPLO DE SALIDA DESEADA:\n"
+            "T(n) = 2T(n/2) + n\n"
+            "= 2(2T(n/4) + n/2) + n\n"
+            "= 4T(n/4) + n + n\n"
+            "= 4T(n/4) + 2n\n"
+            "...\n"
+            "T(n) = n log n"
+        )
+        return self._send_prompt(prompt)
+
     def validate_complexity(self, algorithm_pseudocode: str) -> str:
         """
         Valida el algoritmo completo (El 'Check' final).

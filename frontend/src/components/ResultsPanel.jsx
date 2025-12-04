@@ -225,6 +225,25 @@ const ResultsPanel = ({ data, loading, error, activeView, setActiveView }) => {
                                 <div className="code-block" style={{ fontSize: '1.2rem', textAlign: 'center' }}>
                                     {data.recurrence_relation}
                                 </div>
+
+                                {/* Pasos de Resolución */}
+                                {data.recurrence_steps && (
+                                    <div style={{ marginTop: '1.5rem', textAlign: 'left' }}>
+                                        <h4 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Resolución Paso a Paso:</h4>
+                                        <div style={{
+                                            background: 'rgba(0,0,0,0.3)',
+                                            padding: '1rem',
+                                            borderRadius: '6px',
+                                            fontFamily: 'monospace',
+                                            whiteSpace: 'pre-wrap',
+                                            color: '#e2e8f0',
+                                            fontSize: '0.9rem',
+                                            borderLeft: '3px solid var(--accent-primary)'
+                                        }}>
+                                            {data.recurrence_steps}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

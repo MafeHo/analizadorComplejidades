@@ -264,7 +264,15 @@ def analyze_algorithm(filepath, translate_mode=False):
 
         # 5. Generar Árbol de Recursión (Solo si es recursivo)
         if is_recursive:
-            print("\n--- 5. Generando Árbol de Recursión ---")
+            print("\n--- 5. Generando Árbol de Recursión y Pasos ---")
+            
+            # 5.1 Pasos de Resolución
+            if analysis_summary.get("recurrence_relation") != "N/A":
+                 print(" > Generando pasos de resolución...")
+                 steps = llm_client.solve_recurrence_steps(analysis_summary["recurrence_relation"])
+                 analysis_summary["recurrence_steps"] = steps
+
+            # 5.2 Árbol
             recursion_tree_json = llm_client.generate_recursion_tree(full_pseudocode)
             
             # Intentar parsear JSON para asegurar que sea válido antes de enviarlo
