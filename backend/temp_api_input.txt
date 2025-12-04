@@ -1,10 +1,11 @@
-// Suma Gauss
-SUMA_GAUSS(n)
+Fibonacci(n)
 begin
-    suma <- 0;
-    for i <- 1 to n do
+    If (n <= 1) then
     begin
-        suma <- suma + i;
+        return n;
+    end
+    else
+    begin
+        return Fibonacci(n-1) + Fibonacci(n-2);
     end;
-    SUMA_GAUSS <- suma;
 end

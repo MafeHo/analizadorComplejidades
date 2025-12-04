@@ -167,6 +167,46 @@ class LLMClient:
         sys_instr = "Generador de datos estructurados para visualización."
         return self._send_prompt(prompt, system_instr=sys_instr)
 
+    def generate_recursion_tree(self, algorithm_pseudocode: str) -> str:
+        """
+        Genera una estructura de árbol de recursión en formato JSON.
+        """
+        prompt = (
+            "Genera un ÁRBOL DE RECURSIÓN para el siguiente algoritmo recursivo.\n"
+            "Usa un caso de prueba pequeño pero ilustrativo (ej. n=4 para Fibonacci, n=3 para Hanoi).\n\n"
+            "REQUISITO DE FORMATO:\n"
+            "Devuelve SOLAMENTE un objeto JSON válido con la siguiente estructura recursiva:\n"
+            "{\n"
+            "  \"root\": {\n"
+            "    \"label\": \"fib(4)\",\n"
+            "    \"result\": \"3\",\n"
+            "    \"execution_order\": 1,\n"
+            "    \"children\": [\n"
+            "       { \"label\": \"fib(3)\", \"result\": \"2\", \"execution_order\": 2, \"children\": [...] },\n"
+            "       { \"label\": \"fib(2)\", \"result\": \"1\", \"execution_order\": 5, \"children\": [] }\n"
+            "    ]\n"
+            "  }\n"
+            "}\n"
+            "EJEMPLO HANOI (IMPORTANTE: INCLUIR TODOS LOS ARGUMENTOS):\n"
+            "{\n"
+            "  \"root\": {\n"
+            "    \"label\": \"Hanoi(3, 'A', 'C', 'B')\",\n"
+            "    \"result\": \"void\",\n"
+            "    \"execution_order\": 1,\n"
+            "    \"children\": [...]\n"
+            "  }\n"
+            "}\n\n"
+            "REGLAS:\n"
+            "1. 'label': DEBE INCLUIR TODOS LOS ARGUMENTOS de la llamada. Ej: 'Hanoi(3, A, C, B)' en lugar de solo 'Hanoi(3)'.\n"
+            "2. 'result': El valor que retorna esa llamada específica.\n"
+            "3. 'execution_order': Un número entero que indica el orden secuencial en que se llama a la función (1, 2, 3...).\n"
+            "4. 'children': Lista de llamadas recursivas que hace esa función. Vacío si es caso base.\n"
+            "5. NO uses Markdown. NO uses bloques de código ```json.\n"
+            f"CÓDIGO:\n```\n{algorithm_pseudocode}\n```"
+        )
+        sys_instr = "Generador de estructuras de datos jerárquicas."
+        return self._send_prompt(prompt, system_instr=sys_instr)
+
     def translate_to_pseudocode(self, natural_language_text: str) -> str:
         """Traduce lenguaje natural a la sintaxis del parser."""
         grammar_rules = (

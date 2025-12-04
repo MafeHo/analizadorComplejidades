@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Activity, List, BarChart2, AlertCircle, CheckCircle, FunctionSquare, Info, Table, Bot } from 'lucide-react';
+import RecursionTree from './RecursionTree';
 
-const ResultsPanel = ({ data, loading, error }) => {
-    const [activeView, setActiveView] = useState('lines'); // lines, cases, recurrence, info, trace
+const ResultsPanel = ({ data, loading, error, activeView, setActiveView }) => {
 
     if (loading) {
         return (
@@ -426,6 +426,15 @@ const ResultsPanel = ({ data, loading, error }) => {
                                     }
                                 })()}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeView === 'environments' && (
+                    <div className="view-content fade-in">
+                        <h3 className="section-title">Ambientes Recursivos</h3>
+                        <div style={{ marginTop: '1rem' }}>
+                            <RecursionTree data={data.recursion_tree} />
                         </div>
                     </div>
                 )}

@@ -226,6 +226,21 @@ def analyze_algorithm(filepath, translate_mode=False):
              analysis_summary["case_average"] = final_comp
              analysis_summary["case_worst"] = final_comp
 
+        # 5. Generar Árbol de Recursión (Solo si es recursivo)
+        if is_recursive:
+            print("\n--- 5. Generando Árbol de Recursión ---")
+            recursion_tree_json = llm_client.generate_recursion_tree(full_pseudocode)
+            
+            # Intentar parsear JSON para asegurar que sea válido antes de enviarlo
+            try:
+                import json
+                clean_tree = recursion_tree_json.replace("```json", "").replace("```", "").strip()
+                analysis_summary["recursion_tree"] = json.loads(clean_tree)
+                print(" > Árbol generado correctamente.")
+            except:
+                print(" > Error parseando JSON del árbol. Se enviará como texto crudo (fallback).")
+                analysis_summary["recursion_tree"] = None # O manejarlo en frontend si es null
+
         # 4. Diagrama de Seguimiento
         print("\n--- 4. Generando Trace Table ---")
         trace_diagram = llm_client.generate_trace_table(full_pseudocode)

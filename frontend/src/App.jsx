@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
-import { Play, Upload, FileCode, Network } from 'lucide-react';
+import { Play, Upload, FileCode, Network, Share2 } from 'lucide-react';
 import ResultsPanel from './components/ResultsPanel';
 import NaturalLanguageInput from './components/NaturalLanguageInput';
 import TreeModal from './components/TreeModal';
@@ -27,6 +27,7 @@ end`);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [showTreeModal, setShowTreeModal] = useState(false);
+  const [activeView, setActiveView] = useState('lines'); // lines, cases, recurrence, info, trace, environments
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -373,11 +374,28 @@ end`
             Visualizar Árbol
           </button>
         )}
+
+        {results && results.recursion_tree && (
+          <button
+            className="btn btn-secondary btn-tree-visualizer"
+            onClick={() => setActiveView('environments')}
+            style={{ padding: '0.8rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Share2 size={20} color="#33C1FF" />
+            Ambientes Recursivos
+          </button>
+        )}
       </div>
 
       {/* 5. Results Panel (Full Width) */}
       <section className="results-section-full">
-        <ResultsPanel data={results} loading={loading} error={error} />
+        <ResultsPanel
+          data={results}
+          loading={loading}
+          error={error}
+          activeView={activeView}
+          setActiveView={setActiveView}
+        />
       </section>
 
       {/* Modals */}
