@@ -127,14 +127,22 @@ class LLMClient:
         Aquí sí pedimos explicación para mostrar en el informe.
         """
         prompt = (
-            "Analiza el siguiente pseudocódigo completo y valida su complejidad.\n"
-            "1. Identifica si es Iterativo o Recursivo.\n"
-            "2. Si es Recursivo: ¿Qué método teórico aplica? (Maestro, Característica, Árbol).\n"
-            "3. Si es Iterativo: Identifica patrones de bucles (Sumatorias).\n"
-            "4. Conclusión Final: Complejidad en Peor Caso (O), Mejor Caso (Ω) y Promedio (Θ).\n\n"
+            "Analiza el siguiente pseudocódigo y devuelve un objeto JSON estrictamente formateado.\n"
+            "NO uses Markdown. NO uses bloques de código ```json.\n"
+            "Solo devuelve el JSON crudo.\n\n"
+            "Estructura JSON requerida:\n"
+            "{\n"
+            "  \"complexity\": \"O(...)\",\n"
+            "  \"method\": \"Nombre del método (ej. Teorema Maestro)\",\n"
+            "  \"reasoning\": [\"Punto 1 corto\", \"Punto 2 corto\", \"Punto 3 corto\"]\n"
+            "}\n\n"
+            "REGLAS:\n"
+            "- 'complexity': Solo la notación matemática.\n"
+            "- 'method': Máximo 5 palabras.\n"
+            "- 'reasoning': Exactamente 3 frases cortas y directas.\n\n"
             f"CÓDIGO:\n```\n{algorithm_pseudocode}\n```"
         )
-        sys_instr = "Eres un profesor evaluando un proyecto de algoritmos. Sé técnico y preciso."
+        sys_instr = "Eres una API que devuelve JSON. Sé breve y preciso."
         return self._send_prompt(prompt, system_instr=sys_instr)
 
     def generate_trace_table(self, algorithm_pseudocode: str) -> str:

@@ -1,25 +1,25 @@
-BubbleSort(A, n)
+Hanoi(n)
 begin
-    // Outer loop for passes
-    i <- 0;
-    while (i < n - 1) do
+    // Caso base: Si no hay discos para mover, el número de movimientos es cero.
+    If (n = 0) then
     begin
-        // Inner loop for comparisons and swaps
-        j <- 0;
-        while (j < n - i - 1) do
-        begin
-            // Compare adjacent elements
-            If (A[j] > A[j+1]) then
-            begin
-                // Swap A[j] and A[j+1]
-                temp <- A[j];
-                A[j] <- A[j+1];
-                A[j+1] <- temp;
-            end;
-            j <- j + 1;
-        end;
-        i <- i + 1;
+        return 0;
+    end
+    else
+    begin
+        // El algoritmo de las Torres de Hanói implica tres pasos recursivos:
+        // 1. Mover n-1 discos del pilar de origen al pilar auxiliar.
+        //    Esto se logra con una llamada recursiva a Hanoi(n-1).
+        
+        // 2. Mover el n-ésimo disco (el más grande) del pilar de origen al pilar destino.
+        //    Esto cuenta como 1 movimiento.
+        
+        // 3. Mover los n-1 discos del pilar auxiliar al pilar destino.
+        //    Esto se logra con otra llamada recursiva a Hanoi(n-1).
+        
+        // El total de movimientos es la suma de los movimientos de estos tres pasos.
+        // Se sigue la regla de no asignar llamadas recursivas a variables,
+        // usando las llamadas directamente en la expresión de retorno.
+        return Hanoi(n - 1) + 1 + Hanoi(n - 1);
     end;
-    // Returns 0 to indicate completion, as the array A is sorted in-place.
-    return 0;
 end;

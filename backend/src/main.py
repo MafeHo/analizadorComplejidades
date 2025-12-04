@@ -147,36 +147,67 @@ def analyze_algorithm(filepath, translate_mode=False):
                     seen.add(item['line'])
             print("="*60)
 
-        # 3. Validación Teórica (LLM) - LÓGICA ORIGINAL
+        # 3. Validación Teórica (LLM)
         print("\n--- 3. Validación Teórica (LLM) ---")
         llm_validation = llm_client.validate_complexity(full_pseudocode)
-        analysis_summary["validation_details"] = llm_validation
         
-        # Sanitize for Windows console
+        # Intentar parsear JSON
+        import json
         try:
-            safe_validation = llm_validation.encode('cp1252', errors='replace').decode('cp1252')
-            print(safe_validation)
-        except:
-            print(llm_validation.encode('ascii', errors='replace').decode('ascii'))
-
-        # Parsing inteligente de la respuesta del LLM
-        complejidades = re.findall(r'(O|Θ|Ω|Theta|Omega)\s*\(([^)]+)\)', llm_validation)
-        
-        for tipo, valor in complejidades:
-            comp_str = f"{tipo}({valor})"
-            # Fix for Windows console encoding
-            comp_str = comp_str.replace('Θ', 'Theta').replace('Ω', 'Omega')
+            # Limpiar posibles bloques de código markdown si el LLM los puso
+            clean_json = llm_validation.replace("```json", "").replace("```", "").strip()
+            validation_data = json.loads(clean_json)
             
-            if "Theta" in comp_str:
-                analysis_summary["case_average"] = comp_str
-                analysis_summary["complexity_validated"] = comp_str
-            elif "O" in tipo:
-                analysis_summary["case_worst"] = comp_str
+            # Extraer campos
+            comp_llm = validation_data.get("complexity", "Desconocida")
+            method_llm = validation_data.get("method", "N/A")
+            reasoning_llm = validation_data.get("reasoning", [])
+            
+            # Formatear para visualización (validation_details)
+            formatted_details = f"**Complejidad:** {comp_llm}\n"
+            formatted_details += f"**Método:** {method_llm}\n"
+            formatted_details += "**Razonamiento:**\n"
+            if isinstance(reasoning_llm, list):
+                for r in reasoning_llm:
+                    formatted_details += f"- {r}\n"
+            else:
+                formatted_details += f"{reasoning_llm}\n"
+            
+            analysis_summary["validation_details"] = formatted_details
+            
+            # Usar la complejidad directa del JSON
+            if "Theta" in comp_llm:
+                analysis_summary["case_average"] = comp_llm
+                analysis_summary["complexity_validated"] = comp_llm
+            elif "O" in comp_llm:
+                analysis_summary["case_worst"] = comp_llm
                 if analysis_summary["complexity_validated"] == "Desconocida":
-                    analysis_summary["complexity_validated"] = comp_str
-            elif "Omega" in comp_str:
-                analysis_summary["case_best"] = comp_str
+                     analysis_summary["complexity_validated"] = comp_llm
+            elif "Omega" in comp_llm:
+                analysis_summary["case_best"] = comp_llm
 
+            print(f"JSON Parseado: {comp_llm} via {method_llm}")
+
+        except json.JSONDecodeError:
+            print("Advertencia: No se pudo parsear JSON del LLM. Usando texto plano.")
+            analysis_summary["validation_details"] = llm_validation
+            
+            # Fallback a Regex (Lógica Original)
+            complejidades = re.findall(r'(O|Θ|Ω|Theta|Omega)\s*\(([^)]+)\)', llm_validation)
+            for tipo, valor in complejidades:
+                comp_str = f"{tipo}({valor})"
+                comp_str = comp_str.replace('Θ', 'Theta').replace('Ω', 'Omega')
+                
+                if "Theta" in comp_str:
+                    analysis_summary["case_average"] = comp_str
+                    analysis_summary["complexity_validated"] = comp_str
+                elif "O" in tipo:
+                    analysis_summary["case_worst"] = comp_str
+                    if analysis_summary["complexity_validated"] == "Desconocida":
+                        analysis_summary["complexity_validated"] = comp_str
+                elif "Omega" in comp_str:
+                    analysis_summary["case_best"] = comp_str
+        
         # Si el LLM devolvió error, mostrarlo
         if "Error" in llm_validation and analysis_summary["complexity_validated"] == "Desconocida":
              analysis_summary["complexity_validated"] = llm_validation

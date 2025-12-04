@@ -1,0 +1,11 @@
+Hanoi(n)
+begin
+    If (n = 0) then
+    begin
+        return 0;
+    end
+    else
+    begin
+        return Hanoi(n - 1) + 1 + Hanoi(n - 1);
+    end;
+end;
