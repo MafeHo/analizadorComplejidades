@@ -162,22 +162,66 @@ class LLMClient:
     def translate_to_pseudocode(self, natural_language_text: str) -> str:
         """Traduce lenguaje natural a la sintaxis del parser."""
         grammar_rules = (
-            "SINTAXIS OBLIGATORIA (ANTLR G4):\n"
-            "1. Asignación: usa '<-'\n"
-            "2. Ciclos: 'for i <- 1 to n do begin ... end;'\n"
-            "3. Condicionales: 'If (cond) then begin ... end else begin ... end;'\n"
-            "4. Bloques: Siempre usa 'begin' y 'end' para cuerpos de control.\n"
-            "5. Comentarios: Usa '//'\n"
-            "6. Fin de línea: Usa punto y coma ';'\n"
+            "SINTAXIS OBLIGATORIA (ANTLR G4) - SIGUE ESTE EJEMPLO EXACTO:\n\n"
+            "// 1. SOLO UNA FUNCIÓN PRINCIPAL. No generes funciones auxiliares.\n"
+            "// Si necesitas lógica extra (como Merge), ESCRIBELA DENTRO (Inline).\n"
+            "NombreAlgoritmo(n)\n"
+            "begin\n"
+            "    // 2. Asignaciones con '<-'\n"
+            "    i <- 0;\n"
+            "    \n"
+            "    // 3. Condicionales (If-then-begin-end-else-begin-end)\n"
+            "    // IMPORTANTE: Usa '=' para comparar (NO '==')\n"
+            "    If (n = 0) then\n"
+            "    begin\n"
+            "        return 0;\n"
+            "    end\n"
+            "    else\n"
+            "    begin\n"
+            "        // 4. Ciclos (while o for)\n"
+            "        while (i < n) do\n"
+            "        begin\n"
+            "            i <- i + 1;\n"
+            "        end;\n"
+            "        \n"
+            "        // 5. Operadores: +, -, *, /, div (entera), mod (residuo)\n"
+            "        mitad <- n div 2;\n"
+            "        \n"
+            "        // 6. Arreglos: length(A) es válido. Acceso: A[i]\n"
+            "        // NO declares arreglos locales con tamaño (ej: L[n] es ILEGAL)\n"
+            "        // Simplemente úsalos o asume que existen.\n"
+            "        val <- A[i];\n"
+            "        \n"
+            "        return n * 2;\n"
+            "    end;\n"
+            "end;\n\n"
+            "REGLAS CRÍTICAS DE SINTAXIS:\n"
+            "1. ESTRUCTURA: Genera UNA SOLA función. Si hay auxiliares, INCLUYE SU CÓDIGO DENTRO.\n"
+            "2. PREFERENCIA: Usa RECURSIÓN SIMPLE. No simules pilas ni uses iteración compleja si no es necesario.\n"
+            "3. CABECERA: 'Nombre(params)' sin 'function'.\n"
+            "4. 'begin' SIEMPRE en línea nueva.\n"
+            "5. IGUALDAD: Usa '='. '==' ESTÁ PROHIBIDO.\n"
+            "6. ELSE: Siempre 'else begin ... end'. PROHIBIDO 'else If'.\n"
+            "7. DIVISIÓN: Usa 'div' para enteros, '/' para reales.\n"
+            "8. COMENTARIOS: Siempre en línea propia con '//'. PROHIBIDO al final de línea.\n"
+            "9. PUNTO Y COMA: Termina sentencias con ';'.\n"
+            "10. DOS PUNTOS: Prohibido ':' en todo el código.\n"
+            "11. ARREGLOS: NO declares arreglos locales con []. Solo úsalos. PROHIBIDO '<- []'.\n"
+            "12. OPTIMIZACIÓN: NO asignes llamadas recursivas a variables. Úsalas directo en el return (ej: return Fib(n-1) + Fib(n-2)).\n"
         )
         
         prompt = (
-            f"Traduce esta descripción a pseudocódigo estricto:\n"
+            f"Traduce esta descripción a pseudocódigo estricto siguiendo el formato anterior:\n"
             f"\"{natural_language_text}\"\n\n"
             f"{grammar_rules}\n"
             f"Salida: SOLO el bloque de código."
         )
-        return self._send_prompt(prompt)
+
+        response = self._send_prompt(prompt)
+        
+        # Limpieza de bloques de código Markdown
+        cleaned = response.replace("```pseudocode", "").replace("```", "").strip()
+        return cleaned
 
     def get_total_token_cost(self):
         return self.total_tokens_used

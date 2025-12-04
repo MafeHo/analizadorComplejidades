@@ -55,11 +55,8 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
             if "Theta" not in formatted_str and "O(" not in formatted_str:
                 formatted_str = f"Theta({formatted_str})"
 
-            # Solo mostrar ambos si son diferentes y no es un error
-            if raw_str != formatted_str and "Unknown" not in raw_str:
-                final_str = f"{raw_str} = {formatted_str}"
-            else:
-                final_str = formatted_str
+            # Solo mostrar formatted_str para mantener la estética limpia
+            final_str = formatted_str
 
         return AnalysisResult(
             worst_case=final_str, 
@@ -241,9 +238,24 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
             # Get argument
             args = ctx.expression()
             new_size = self.math.n
+            
+            # Heuristic: Find the argument that looks like a size (contains n or numbers)
+            found_size = False
             if args:
-                # Visit first arg to resolve variables (e.g. n/2)
-                new_size = self.visit(args[0])
+                for arg in args:
+                    val = self.visit(arg)
+                    # Check if val depends on n or is a number
+                    if hasattr(val, 'free_symbols') and self.math.n in val.free_symbols:
+                        new_size = val
+                        found_size = True
+                        break
+                    if isinstance(val, (int, float)) or (hasattr(val, 'is_number') and val.is_number):
+                        # Candidate, but prefer n-dependent
+                        new_size = val
+                
+                # If no n-dependent arg found, fallback to the first one (legacy behavior)
+                if not found_size and args:
+                     new_size = self.visit(args[0])
             
             cost = self.math.T(new_size)
             self._log_step(ctx, cost, details=f"Recurrencia: T({new_size})")

@@ -1,28 +1,25 @@
-```pseudocode
-// Algoritmo Seleccion: Implementa el ordenamiento por selección.
-// Recibe un arreglo A de tamaño n.
-Algoritmo Seleccion(A, n) begin
-  // Recorre el arreglo desde la primera posición hasta la penúltima.
-  for i <- 1 to n-1 do begin
-    // Asume que el elemento actual es el mínimo en la parte no ordenada.
-    min <- i;
-
-    // Busca el número más pequeño en la parte no ordenada del arreglo
-    // (desde la posición actual + 1 hasta el final).
-    for j <- i + 1 to n do begin
-      If (A[j] < A[min]) then begin
-        min <- j;
-      end;
+BubbleSort(A, n)
+begin
+    // Outer loop for passes
+    i <- 0;
+    while (i < n - 1) do
+    begin
+        // Inner loop for comparisons and swaps
+        j <- 0;
+        while (j < n - i - 1) do
+        begin
+            // Compare adjacent elements
+            If (A[j] > A[j+1]) then
+            begin
+                // Swap A[j] and A[j+1]
+                temp <- A[j];
+                A[j] <- A[j+1];
+                A[j+1] <- temp;
+            end;
+            j <- j + 1;
+        end;
+        i <- i + 1;
     end;
-
-    // Intercambia el elemento más pequeño encontrado con la posición actual,
-    // si el mínimo no está ya en la posición correcta.
-    If (min != i) then begin
-      // Usa una variable temporal para realizar el intercambio.
-      temp <- A[i];
-      A[i] <- A[min];
-      A[min] <- temp;
-    end;
-  end;
+    // Returns 0 to indicate completion, as the array A is sorted in-place.
+    return 0;
 end;
-```

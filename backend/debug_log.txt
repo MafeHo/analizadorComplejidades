@@ -1,0 +1,6 @@
+Ecuacion detectada: T(n) = 3*n + 2*T(A) + O(1), Base case: O(1)
+DEBUG: Total Cost Expr: Max(0, 3*n + 2*T(A) + 5) + 3
+DEBUG: Solved Data: {'complexity': 3*n + 2*T(A) + 8, 'details': None}
+Ecuacion detectada: T(n) = 3*n + 2*T(n/2) + O(1), Base case: O(1)
+DEBUG: Total Cost Expr: Max(0, 3*n + 2*T(n/2) + 5) + 3
+DEBUG: Solved Data: {'complexity': n*log(n)/log(2), 'details': {'type': 'master_theorem', 'a': '2', 'b': '2', 'f_n': '3*n + 8', 'log_val': '1', 'case': 2}}

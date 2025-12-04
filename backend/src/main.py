@@ -60,6 +60,7 @@ def analyze_algorithm(filepath, translate_mode=False):
                     f.write(pseudocode)
             except: pass
             full_pseudocode = pseudocode
+            analysis_summary["pseudocode"] = pseudocode # <--- ADDED THIS LINE
 
         # 1. Parsing ANTLR
         print(f"--- 1. Análisis Estructural (ANTLR) ---")

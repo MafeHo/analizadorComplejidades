@@ -345,9 +345,11 @@ class MathEngine:
 
         # Reemplazo de Phi (Numero Aureo)
         # Variaciones comunes de SymPy
-        s = s.replace("1/2 + sqrt(5)/2", "phi")
-        s = s.replace("(1 + sqrt(5))/2", "phi")
-        s = s.replace("sqrt(5)/2 + 1/2", "phi")
+        s = s.replace("1/2 + sqrt(5)/2", "φ")
+        s = s.replace("(1 + sqrt(5))/2", "φ")
+        s = s.replace("sqrt(5)/2 + 1/2", "φ")
+        s = s.replace("phi", "φ")
+        s = s.replace("\\phi", "φ")
 
         # Reemplazo de sqrt
         s = s.replace("sqrt", "√")
