@@ -1,42 +1,14 @@
-Seleccion(A, n)
+Hanoi(n)
 begin
-    // Recorrer el arreglo desde la primera posición hasta la penúltima
-    // El índice 'i' va desde 0 hasta n-2
-    i <- 0;
-    while (i < n - 1) do
+    If (n = 0) then
     begin
-        // Usar la variable min_idx para guardar el índice del menor elemento
-        // Asumir que el elemento actual es el más pequeño
-        min_idx <- i;
-
-        // Buscar el número más pequeño en la parte no ordenada del arreglo
-        // (desde la posición actual+1 hasta el final)
-        // El índice 'j' va desde i+1 hasta n-1
-        j <- i + 1;
-        while (j < n) do
-        begin
-            // Si se encuentra un elemento más pequeño que el actual mínimo
-            If (A[j] < A[min_idx]) then
-            begin
-                // Actualizar el índice del elemento más pequeño
-                min_idx <- j;
-            end;
-            j <- j + 1;
-        end;
-
-        // Si el índice del menor elemento encontrado no es la posición actual
-        // (es decir, se encontró un elemento más pequeño)
-        If (min_idx = i) then
-        begin
-            // No es necesario intercambiar, el elemento ya está en su lugar
-        end
-        else
-        begin
-            // Intercambiar el elemento actual con el elemento más pequeño encontrado
-            temp <- A[i];
-            A[i] <- A[min_idx];
-            A[min_idx] <- temp;
-        end;
-        i <- i + 1;
+        return 0;
+    end
+    else
+    begin
+        // Mueve n-1 discos de la torre origen a la auxiliar
+        // Mueve el disco n de la torre origen a la destino
+        // Mueve n-1 discos de la torre auxiliar a la destino
+        return Hanoi(n - 1) + 1 + Hanoi(n - 1);
     end;
 end;

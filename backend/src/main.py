@@ -72,7 +72,43 @@ def analyze_algorithm(filepath, translate_mode=False):
         tree = parser.program()
         
         if parser.getNumberOfSyntaxErrors() > 0:
-            print("Advertencia: Errores de sintaxis detectados (el análisis puede ser parcial).")
+            print("Advertencia: Errores de sintaxis detectados.")
+            
+            # Auto-Reparación si no estamos ya en modo traducción
+            if not translate_mode:
+                print("\n>>> INTENTO DE AUTO-REPARACIÓN CON IA <<<")
+                print("Detectando sintaxis inválida. Enviando a LLM para corrección...")
+                
+                try:
+                    # Usamos el contenido original 'content' para reparar
+                    repaired_code = llm_client.translate_to_pseudocode(content)
+                    print("\n--- Código Reparado ---\n" + repaired_code + "\n-----------------------\n")
+                    
+                    # Actualizar referencias
+                    full_pseudocode = repaired_code
+                    analysis_summary["pseudocode"] = repaired_code
+                    
+                    # Añadir nota a la validación (se inicializa si está vacía)
+                    if not analysis_summary["validation_details"]:
+                        analysis_summary["validation_details"] = ""
+                    analysis_summary["validation_details"] += "\n\n[NOTA: El código original contenía errores y fue reparado automáticamente por la IA.]"
+                    
+                    # Re-parsing completo
+                    print(f"--- 1.1. Re-Análisis Estructural (ANTLR) ---")
+                    input_stream = InputStream(full_pseudocode)
+                    lexer = PseudoCodeAnalyzerLexer(input_stream)
+                    stream = CommonTokenStream(lexer)
+                    parser = PseudoCodeAnalyzerParser(stream)
+                    parser.removeErrorListeners()
+                    tree = parser.program()
+                    
+                    if parser.getNumberOfSyntaxErrors() == 0:
+                        print(" > Reparación exitosa. Continuando análisis...")
+                    else:
+                        print(" > Advertencia: La reparación no eliminó todos los errores.")
+                        
+                except Exception as e:
+                    print(f"Error durante auto-reparación: {e}")
 
         # 2. Cálculo de Costos (Visitor)
         print("\n--- 2. Cálculo de Costos (Visitor) ---")

@@ -1,0 +1,8 @@
+// Sintaxis estilo C (Incorrecta para nuestro parser)
+function Suma(n) {
+    if (n == 0) {
+        return 0;
+    } else {
+        return n + Suma(n-1);
+    }
+}

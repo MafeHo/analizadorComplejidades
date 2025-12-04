@@ -332,6 +332,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
     def visitExprNot(self, ctx): return Integer(1)
 
     def _count_ops_in_expr(self, expr_ctx):
+        if expr_ctx is None: return Integer(0)
         count = 0
         if hasattr(expr_ctx, 'expression'):
             exprs = expr_ctx.expression()
