@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
-import { Play, Upload, FileCode } from 'lucide-react';
+import { Play, Upload, FileCode, Network } from 'lucide-react';
 import ResultsPanel from './components/ResultsPanel';
 import NaturalLanguageInput from './components/NaturalLanguageInput';
+import TreeModal from './components/TreeModal';
 import './App.css';
 import ComplexityChart from './components/ComplexityChart';
 
@@ -25,6 +26,7 @@ end`);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [showTreeModal, setShowTreeModal] = useState(false);
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -190,6 +192,7 @@ begin
     begin
         total <- total + A[i]; 
     end;
+    end;
 end`,
     "Suma Gauss": `// Suma Gauss
 SUMA_GAUSS(n)
@@ -340,7 +343,7 @@ end`
       </section>
 
       {/* 4. Action Button */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '1rem 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', margin: '1rem 0' }}>
         <button
           className="btn btn-primary"
           onClick={handleAnalyze}
@@ -359,12 +362,26 @@ end`
             </>
           )}
         </button>
+
+        {results && results.master_theorem_data && (
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowTreeModal(true)}
+            style={{ padding: '0.8rem 2rem', fontSize: '1.1rem', backgroundColor: '#2b2b2b', border: '1px solid #444', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Network size={20} color="#33C1FF" />
+            Visualizar Árbol
+          </button>
+        )}
       </div>
 
       {/* 5. Results Panel (Full Width) */}
       <section className="results-section-full">
         <ResultsPanel data={results} loading={loading} error={error} />
       </section>
+
+      {/* Modals */}
+      <TreeModal isOpen={showTreeModal} onClose={() => setShowTreeModal(false)} data={results} />
     </div>
   );
 }
