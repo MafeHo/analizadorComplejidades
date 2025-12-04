@@ -1,1 +1,12 @@
-Escribe un algoritmo llamado Seleccion que reciba un arreglo A de tamaño n. El algoritmo debe recorrer el arreglo desde la primera posición hasta la penúltima. En cada iteración, debe buscar el número más pequeño en la parte no ordenada del arreglo (desde la posición actual hasta el final). Una vez encuentre el menor, debe intercambiarlo con la posición actual. Usa la variable min para guardar el índice del menor
+// Torres de Hanoi
+HANOI(n)
+begin
+    If (n = 1) then
+    begin
+        HANOI <- 1;
+    end
+    else
+    begin
+        HANOI <- HANOI(n-1) + 1 + HANOI(n-1);
+    end;
+end

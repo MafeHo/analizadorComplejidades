@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, List, BarChart2, AlertCircle, CheckCircle, FunctionSquare, Info, Table } from 'lucide-react';
+import { Activity, List, BarChart2, AlertCircle, CheckCircle, FunctionSquare, Info, Table, Bot } from 'lucide-react';
 
 const ResultsPanel = ({ data, loading, error }) => {
     const [activeView, setActiveView] = useState('lines'); // lines, cases, recurrence, info, trace
@@ -107,6 +107,13 @@ const ResultsPanel = ({ data, loading, error }) => {
                 >
                     <Table size={18} />
                     Prueba
+                </button>
+                <button
+                    className={`nav-btn ${activeView === 'llm_comparison' ? 'active' : ''}`}
+                    onClick={() => setActiveView('llm_comparison')}
+                >
+                    <Bot size={18} />
+                    Verificación IA
                 </button>
             </div>
 
@@ -257,6 +264,101 @@ const ResultsPanel = ({ data, loading, error }) => {
                                     </pre>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {activeView === 'llm_comparison' && (
+                    <div className="view-content fade-in">
+                        <h3 className="section-title">Verificación con Inteligencia Artificial</h3>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                            {/* System Calculation */}
+                            <div className="case-card" style={{ borderColor: 'var(--accent-primary)' }}>
+                                <h4 style={{ color: 'var(--accent-primary)' }}>Cálculo del Sistema</h4>
+                                <div className="case-value" style={{ fontSize: '1.5rem' }}>{finalComp}</div>
+                                <p>Resultado obtenido mediante análisis estático y conteo de operaciones.</p>
+                            </div>
+
+                            {/* LLM Validation */}
+                            <div className="case-card" style={{ borderColor: '#a855f7' }}>
+                                <h4 style={{ color: '#a855f7', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Bot size={16} />
+                                    Validación LLM
+                                </h4>
+                                <div className="case-value" style={{ fontSize: '1.5rem', color: '#d8b4fe' }}>
+                                    {data.complexity_validated ? (
+                                        <span dangerouslySetInnerHTML={{ __html: data.complexity_validated.match(/[OΘΩThetaOmega]+\s*\(([^)]+)\)/) ? data.complexity_validated.match(/[OΘΩThetaOmega]+\s*\(([^)]+)\)/)[0] : "Ver Texto" }} />
+                                    ) : "Pendiente..."}
+                                </div>
+                                <p>Resultado verificado por el modelo de lenguaje (Gemini).</p>
+                            </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '12px', padding: '1.5rem' }}>
+                            <h4 style={{ color: '#d8b4fe', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Info size={18} />
+                                Análisis Detallado de la IA
+                            </h4>
+                            <div style={{ lineHeight: '1.6', color: '#e9d5ff' }}>
+                                {(() => {
+                                    const text = data.validation_details || data.explanation || "No hay validación disponible.";
+
+                                    try {
+                                        // Try to parse as JSON first
+                                        // Clean potential markdown code blocks if LLM ignores instruction
+                                        const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+                                        const json = JSON.parse(cleanText);
+
+                                        return (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                    <div style={{ background: 'rgba(168, 85, 247, 0.2)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.4)' }}>
+                                                        <span style={{ fontSize: '0.8rem', color: '#d8b4fe', display: 'block', marginBottom: '0.2rem' }}>Complejidad</span>
+                                                        <strong style={{ fontSize: '1.2rem', color: '#fff' }}>{json.complexity}</strong>
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block' }}>Método</span>
+                                                        <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{json.method}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ background: 'rgba(30, 41, 59, 0.5)', padding: '0.75rem', borderRadius: '8px' }}>
+                                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '0.5rem' }}>Justificación Clave</span>
+                                                    <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.9rem', color: '#cbd5e1' }}>
+                                                        {json.reasoning.map((item, i) => (
+                                                            <li key={i} style={{ marginBottom: '0.25rem' }}>{item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        );
+                                    } catch (e) {
+                                        // Fallback to text parsing (previous logic)
+                                        const sections = text.split(/\n\s*\n/);
+
+                                        return sections.map((section, idx) => {
+                                            const highlighted = section.split(/(\bO\([^)]+\)|\bTheta\([^)]+\)|\bOmega\([^)]+\))/g).map((part, i) =>
+                                                part.match(/^(O|Theta|Omega)\(/) ? <strong key={i} style={{ color: '#fff', background: 'rgba(168, 85, 247, 0.3)', padding: '0 4px', borderRadius: '4px' }}>{part}</strong> : part
+                                            );
+
+                                            if (section.trim().startsWith('-') || section.trim().startsWith('*')) {
+                                                return (
+                                                    <ul key={idx} style={{ margin: '0.5rem 0', paddingLeft: '1.5rem' }}>
+                                                        {section.split('\n').map((line, liIdx) => (
+                                                            <li key={liIdx} style={{ marginBottom: '0.25rem' }}>
+                                                                {line.replace(/^[-*]\s*/, '')}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                );
+                                            }
+
+                                            return <p key={idx} style={{ marginBottom: '1rem' }}>{highlighted}</p>;
+                                        });
+                                    }
+                                })()}
+                            </div>
                         </div>
                     </div>
                 )}
