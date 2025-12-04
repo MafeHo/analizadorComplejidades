@@ -365,9 +365,9 @@ end`
 
         {results && results.master_theorem_data && (
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary btn-tree-visualizer"
             onClick={() => setShowTreeModal(true)}
-            style={{ padding: '0.8rem 2rem', fontSize: '1.1rem', backgroundColor: '#2b2b2b', border: '1px solid #444', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ padding: '0.8rem 2rem', fontSize: '1.1rem' }}
           >
             <Network size={20} color="#33C1FF" />
             Visualizar Árbol
