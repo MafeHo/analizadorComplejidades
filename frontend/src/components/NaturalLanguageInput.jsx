@@ -42,9 +42,9 @@ const NaturalLanguageInput = ({ onTranslate, loading }) => {
                     disabled={loading || !input.trim()}
                     style={{ minWidth: '120px' }}
                 >
-                    {loading ? 'Generando...' : (
+                    {loading ? <span>Generando...</span> : (
                         <>
-                            Generar <ArrowRight size={16} />
+                            <span>Generar</span> <ArrowRight size={16} />
                         </>
                     )}
                 </button>

@@ -50,18 +50,70 @@ const ResultsPanel = ({ data, loading, error, activeView, setActiveView }) => {
 
     // Parse Trace Table
     const parseTraceTable = (markdownTable) => {
-        if (!markdownTable || !markdownTable.includes('|')) return null;
+        if (!markdownTable) return null;
 
-        const lines = markdownTable.split('\n').filter(line => line.trim() !== '');
-        // Filter out separator lines (e.g., |---|---|)
-        const contentLines = lines.filter(line => !line.match(/^\|?\s*-+\s*\|/));
+        const lines = markdownTable.split('\n').map(line => line.trim()).filter(line => line !== '');
 
-        if (contentLines.length < 2) return null;
+        // Find the header line (first line with pipes)
+        const headerIndex = lines.findIndex(line => line.includes('|'));
+        if (headerIndex === -1) return null;
 
-        const headers = contentLines[0].split('|').map(h => h.trim()).filter(h => h !== '');
-        const rows = contentLines.slice(1).map(line =>
-            line.split('|').map(cell => cell.trim()).filter((cell, idx) => idx < headers.length || cell !== '')
-        );
+        const headerLine = lines[headerIndex];
+        const headers = headerLine.split('|').map(h => h.trim()).filter(h => h !== '');
+
+        // Process rows, skipping the separator line (usually immediately follows header)
+        const rows = [];
+        for (let i = headerIndex + 1; i < lines.length; i++) {
+            const line = lines[i];
+            // Skip separator line (contains only dashes, colons, pipes, spaces)
+            if (line.match(/^\|?[\s\-:|]+\|?$/)) continue;
+
+            // Skip lines that don't look like table rows
+            if (!line.includes('|')) continue;
+
+            const cells = line.split('|').map(c => c.trim());
+
+            // Handle leading/trailing empty strings from split if pipes are at ends
+            // Example: "| a | b |" -> ["", "a", "b", ""]
+            // We want to match the number of headers if possible, or just filter empty
+
+            // Better strategy: filter empty cells that are likely artifacts of split
+            // But be careful with actual empty cells.
+            // Usually markdown tables have empty strings at start/end if they have border pipes.
+
+            const cleanCells = cells.filter((c, idx) => {
+                // Keep cell if it's not the first/last empty one created by border pipes
+                // Heuristic: if headers has N items, we expect N cells.
+                // If split gives N+2 (empty start/end), remove them.
+                if (c === '' && (idx === 0 || idx === cells.length - 1)) return false;
+                return true;
+            });
+
+            // If we still have more cells than headers, take the first N
+            // If fewer, pad?
+            // Let's just take what matches headers count or filter empty
+
+            // Simple approach: Filter all empty strings? No, a cell might be empty.
+            // Let's rely on the fact that we stripped border pipes in headers.
+
+            // Re-parse headers to be sure
+            // Header: "| A | B |" -> split -> ["", "A", "B", ""] -> filter -> ["A", "B"]
+
+            // Row: "| 1 | 2 |" -> split -> ["", "1", "2", ""] -> filter -> ["1", "2"]
+
+            const rowData = line.split('|').map(c => c.trim()).filter((c, idx, arr) => {
+                // Remove first and last if they are empty (border pipes)
+                if (idx === 0 && c === '') return false;
+                if (idx === arr.length - 1 && c === '') return false;
+                return true;
+            });
+
+            if (rowData.length > 0) {
+                rows.push(rowData);
+            }
+        }
+
+        if (rows.length === 0) return null;
 
         return { headers, rows };
     };
@@ -335,9 +387,55 @@ const ResultsPanel = ({ data, loading, error, activeView, setActiveView }) => {
                                     <tbody>
                                         {traceData.rows.map((row, rIdx) => (
                                             <tr key={rIdx}>
-                                                {row.map((cell, cIdx) => (
-                                                    <td key={cIdx}>{cell}</td>
-                                                ))}
+                                                {row.map((cell, cIdx) => {
+                                                    // Determine class based on header
+                                                    const headerText = traceData.headers[cIdx];
+                                                    const header = headerText ? headerText.toLowerCase() : "";
+                                                    let cellClass = "";
+                                                    if (header.includes("paso")) cellClass = "cell-step";
+                                                    else if (header.includes("función") || header.includes("funcion")) cellClass = "cell-function";
+                                                    else if (header.includes("variable")) cellClass = "cell-variables";
+                                                    else if (header.includes("explicación") || header.includes("explicacion")) cellClass = "cell-explanation";
+
+                                                    // Render Markdown content (bold and code)
+                                                    const renderContent = (text) => {
+                                                        if (!text) return "";
+                                                        // Split by markdown tokens
+                                                        const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
+                                                        return parts.map((part, i) => {
+                                                            if (part.startsWith('**') && part.endsWith('**')) {
+                                                                return <strong key={i} style={{ color: '#fff' }}>{part.slice(2, -2)}</strong>;
+                                                            }
+                                                            if (part.startsWith('`') && part.endsWith('`')) {
+                                                                return <code key={i} style={{
+                                                                    background: 'rgba(0,0,0,0.3)',
+                                                                    padding: '2px 4px',
+                                                                    borderRadius: '4px',
+                                                                    fontFamily: 'monospace',
+                                                                    color: '#e2e8f0',
+                                                                    fontSize: '0.9em'
+                                                                }}>{part.slice(1, -1)}</code>;
+                                                            }
+                                                            return part;
+                                                        });
+                                                    };
+
+                                                    return (
+                                                        <td key={cIdx} className={cellClass}>
+                                                            {cellClass === "cell-variables" ? (
+                                                                // Highlight changes (->) and strip backticks
+                                                                <span dangerouslySetInnerHTML={{
+                                                                    __html: cell.replace(/`/g, '').replace(/->/g, '<span class="arrow">→</span>')
+                                                                }} />
+                                                            ) : cellClass === "cell-function" ? (
+                                                                // Strip backticks for badge
+                                                                <span className="function-badge">{cell.replace(/`/g, '')}</span>
+                                                            ) : (
+                                                                renderContent(cell)
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
                                             </tr>
                                         ))}
                                     </tbody>

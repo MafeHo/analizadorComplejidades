@@ -354,12 +354,12 @@ end`
           {loading ? (
             <>
               <div className="spinner" style={{ width: '20px', height: '20px', borderTopColor: 'white' }}></div>
-              Analizando...
+              <span>Analizando...</span>
             </>
           ) : (
             <>
               <Play size={20} />
-              Analizar Complejidad
+              <span>Analizar Complejidad</span>
             </>
           )}
         </button>
@@ -371,7 +371,7 @@ end`
             style={{ padding: '0.8rem 2rem', fontSize: '1.1rem' }}
           >
             <Network size={20} color="#33C1FF" />
-            Visualizar Árbol
+            <span>Visualizar Árbol</span>
           </button>
         )}
 
@@ -382,7 +382,7 @@ end`
             style={{ padding: '0.8rem 2rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <Share2 size={20} color="#33C1FF" />
-            Ambientes Recursivos
+            <span>Ambientes Recursivos</span>
           </button>
         )}
       </div>
