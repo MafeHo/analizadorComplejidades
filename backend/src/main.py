@@ -60,7 +60,7 @@ def analyze_algorithm(filepath, translate_mode=False):
                     f.write(pseudocode)
             except: pass
             full_pseudocode = pseudocode
-            analysis_summary["pseudocode"] = pseudocode # <--- ADDED THIS LINE
+            analysis_summary["pseudocode"] = pseudocode
 
         # 1. Parsing ANTLR
         print(f"--- 1. Análisis Estructural (ANTLR) ---")
@@ -128,9 +128,7 @@ def analyze_algorithm(filepath, translate_mode=False):
                 if calculator.current_algorithm_name:
                      analysis_summary["algorithm_name"] = calculator.current_algorithm_name
                 
-                # ### CAMBIO CLAVE AQUÍ ###
                 # Usamos el atributo recurrence_eq del objeto AnalysisResult
-                # Si existe, lo guardamos. Si no, es Iterativo.
                 if hasattr(analysis_result, 'recurrence_eq') and analysis_result.recurrence_eq:
                      analysis_summary["recurrence_relation"] = analysis_result.recurrence_eq
                 elif "T(" in str(analysis_result.worst_case): 
@@ -208,11 +206,37 @@ def analyze_algorithm(filepath, translate_mode=False):
                     formatted_details += f"- {r}\n"
             else:
                 formatted_details += f"{reasoning_llm}\n"
+
+            # Comparación Inteligente: Estático vs LLM
+            static_comp = analysis_summary.get("complexity_calculated", "")
             
-            analysis_summary["validation_details"] = formatted_details
-            
-            # Usar la complejidad directa del JSON
-            if "Theta" in comp_llm:
+            # Normalización simple para comparación
+            def normalize_comp(c):
+                return c.replace("Theta", "").replace("O", "").replace("(", "").replace(")", "").replace("^", "**").strip()
+
+            if "Theta" in static_comp and "O" in comp_llm:
+                try:
+                    if normalize_comp(static_comp) == normalize_comp(comp_llm):
+                        # Coinciden en orden, preferimos la precisión de Theta
+                        analysis_summary["complexity_validated"] = static_comp
+                        formatted_details += f"\n**Nota de Consistencia:** El análisis matemático detectó un límite exacto ({static_comp}) que coincide con el límite superior de la IA ({comp_llm}). Se mantiene la notación más precisa."
+                    else:
+                        # Discrepan en orden
+                        analysis_summary["complexity_validated"] = comp_llm
+                        formatted_details += f"\n**Discrepancia:** El análisis matemático sugirió {static_comp} pero la IA validó {comp_llm}."
+                except:
+                     analysis_summary["complexity_validated"] = comp_llm
+            elif "O" in static_comp and "Theta" in comp_llm:
+                 # Static says O (implies branching/uncertainty), LLM says Theta.
+                 try:
+                     if normalize_comp(static_comp) == normalize_comp(comp_llm):
+                          analysis_summary["complexity_validated"] = static_comp # Keep O
+                          formatted_details += f"\n**Nota:** El análisis estático detectó múltiples caminos de ejecución, por lo que se prefiere la notación de límite superior ({static_comp}) sobre la estimación exacta de la IA."
+                     else:
+                          analysis_summary["complexity_validated"] = comp_llm 
+                 except:
+                      analysis_summary["complexity_validated"] = comp_llm
+            elif "Theta" in comp_llm:
                 analysis_summary["case_average"] = comp_llm
                 analysis_summary["complexity_validated"] = comp_llm
             elif "O" in comp_llm:
@@ -222,6 +246,7 @@ def analyze_algorithm(filepath, translate_mode=False):
             elif "Omega" in comp_llm:
                 analysis_summary["case_best"] = comp_llm
 
+            analysis_summary["validation_details"] = formatted_details
             print(f"JSON Parseado: {comp_llm} via {method_llm}")
 
         except json.JSONDecodeError:

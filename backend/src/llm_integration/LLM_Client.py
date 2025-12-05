@@ -149,22 +149,18 @@ class LLMClient:
         Aquí sí pedimos explicación para mostrar en el informe.
         """
         prompt = (
-            "Analiza el siguiente pseudocódigo y devuelve un objeto JSON estrictamente formateado.\n"
-            "NO uses Markdown. NO uses bloques de código ```json.\n"
-            "Solo devuelve el JSON crudo.\n\n"
-            "Estructura JSON requerida:\n"
+            "Analiza el siguiente pseudocódigo y determina su complejidad asintótica (Big-O, Theta, Omega).\n"
+            "Proporciona una explicación detallada paso a paso.\n"
+            "Devuelve la respuesta en formato JSON:\n"
             "{\n"
-            "  \"complexity\": \"O(...)\",\n"
-            "  \"method\": \"Nombre del método (ej. Teorema Maestro)\",\n"
-            "  \"reasoning\": [\"Punto 1 corto\", \"Punto 2 corto\", \"Punto 3 corto\"]\n"
-            "}\n\n"
-            "REGLAS:\n"
-            "- 'complexity': Solo la notación matemática.\n"
-            "- 'method': Máximo 5 palabras.\n"
-            "- 'reasoning': Exactamente 3 frases cortas y directas.\n\n"
+            "  \"complexity\": \"Theta(n^2)\",\n"
+            "  \"method\": \"Teorema Maestro / Iterativo / Recursivo\",\n"
+            "  \"reasoning\": [\"Paso 1...\", \"Paso 2...\"]\n"
+            "}\n"
+            "Si el límite es exacto, USA THETA. Si es solo superior, usa O.\n"
             f"CÓDIGO:\n```\n{algorithm_pseudocode}\n```"
         )
-        sys_instr = "Eres una API que devuelve JSON. Sé breve y preciso."
+        sys_instr = "Experto en análisis de algoritmos."
         return self._send_prompt(prompt, system_instr=sys_instr)
 
     def generate_trace_table(self, algorithm_pseudocode: str) -> str:

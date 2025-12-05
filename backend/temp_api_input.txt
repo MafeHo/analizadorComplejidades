@@ -1,14 +1,1 @@
-// Algoritmo MergeSort
-MERGE_SORT(A, n)
-begin
-    If (n > 1) then
-    begin
-        mitad <- n / 2;
-        CALL MERGE_SORT(A, mitad);
-        CALL MERGE_SORT(A, mitad);
-        for i <- 1 to n do
-        begin
-            temp <- A[i];
-        end;
-    end;
-end
+haz un codigo de fibonacci

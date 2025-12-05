@@ -3,7 +3,7 @@
 from ..parsing.PseudoCodeAnalyzerVisitor import PseudoCodeAnalyzerVisitor
 from ..parsing.PseudoCodeAnalyzerParser import PseudoCodeAnalyzerParser
 from .MathEngine import MathEngine
-from sympy import Integer, Symbol, Max, ceiling, floor
+from sympy import Integer, Symbol, Max, ceiling, floor, simplify
 
 class AnalysisResult:
     def __init__(self, worst_case=None, line_analysis=None, recurrence_eq=None, master_theorem_data=None, explanation=None):
@@ -24,6 +24,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         self.temp_master_data = None
         self.explanation = None
         self.base_conditions = [] 
+        self.is_exact = True # Default to exact bound (Theta)
         
     def visit(self, tree):
         """Override visit to handle None trees gracefully (e.g. syntax errors)."""
@@ -49,11 +50,12 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         final_str = str(complexity_result)
         if hasattr(self.math, 'format_complexity'):
             raw_str = str(complexity_result).replace("**", "^")
-            formatted_str = self.math.format_complexity(complexity_result)
+            # Pass use_theta based on is_exact flag
+            formatted_str = self.math.format_complexity(complexity_result, use_theta=self.is_exact)
             
-            # Asegurar que formatted_str tenga Theta u O
+            # Asegurar que formatted_str tenga Theta u O si no lo tiene
             if "Theta" not in formatted_str and "O(" not in formatted_str:
-                formatted_str = f"Theta({formatted_str})"
+                formatted_str = f"Theta({formatted_str})" if self.is_exact else f"O({formatted_str})"
 
             # Solo mostrar formatted_str para mantener la estética limpia
             final_str = formatted_str
@@ -77,6 +79,7 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         self.temp_master_data = None
         self.explanation = None
         self.base_conditions = [] 
+        self.is_exact = True # Reset for new algorithm
         
         total_cost = Integer(0)
         if ctx.statement_list():
@@ -181,6 +184,11 @@ class CostCalculator(PseudoCodeAnalyzerVisitor):
         cond = self._count_ops_in_expr(ctx.expression())
         then_c = self.visit(ctx.statement_list(0))
         else_c = self.visit(ctx.statement_list(1)) if ctx.ELSE() else Integer(0)
+        
+        # Detect branching difference
+        diff = simplify(then_c - else_c)
+        if diff != 0:
+            self.is_exact = False # Branching detected, result is Upper Bound (O)
         
         # Detect base case condition
         then_has_T = hasattr(then_c, 'has') and then_c.has(self.math.T)

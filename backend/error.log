@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "C:\Users\natal\Documentos\Ing Sistemas\OctavoSemestre\AyD\PROYECTO\analizadorComplejidades\backend\debug_import.py", line 3, in <module>
+    from src.analysis.CostCalculator import CostCalculator
+ImportError: cannot import name 'CostCalculator' from 'src.analysis.CostCalculator' (C:\Users\natal\Documentos\Ing Sistemas\OctavoSemestre\AyD\PROYECTO\analizadorComplejidades\backend\src\analysis\CostCalculator.py)

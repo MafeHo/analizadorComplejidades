@@ -1,131 +1,58 @@
-# src/analysis/MathEngine.py
-
-from sympy import symbols, Sum, Function, O, oo, log, sympify, Integer, Symbol, simplify, Add, Mul, Pow, Max, roots
-import math
 import re
+import math
+from sympy import symbols, Function, sympify, solve, roots, degree, O, oo, limit, simplify, log, Sum, Add, Mul, Max, Wild
 
 class MathEngine:
     def __init__(self):
         self.n = symbols('n', integer=True, positive=True)
         self.T = Function('T')
-    
-    def sum_loop(self, body_cost, iterator_var_name, start_expr, end_expr):
-        """Calcula sumatoria exacta."""
-        try:
-            i = symbols(str(iterator_var_name), integer=True)
-            s = sympify(start_expr)
-            e = sympify(end_expr)
-            
-            # Sustituir la variable genérica por la variable de sumatoria (entera)
-            generic_i = Symbol(str(iterator_var_name))
-            if hasattr(body_cost, 'subs'):
-                body_cost = body_cost.subs(generic_i, i)
-            
-            sigma_body = Sum(body_cost, (i, s, e)).doit()
-            header_cost = (e - s + 2)
-            return simplify(sigma_body + header_cost)
-        except: return self.n 
-
-    def solve_recurrence(self, complexity_expr):
-        """Resuelve T(n) analizando matemáticamente el argumento."""
-        # 1. Limpieza
-        clean_expr = self._clean_expression(complexity_expr)
-        expr = simplify(clean_expr)
-        
-        # 2. Análisis de Términos
-        terms = expr.args if expr.is_Add else [expr]
-        
-        # Recolectar a (coeficiente) y argumentos de T
-        a = 0
-        target_args = set()
-        non_recursive_terms = []
-        
-        for term in terms:
-            # Buscar T dentro del término
-            t_calls = [atom for atom in term.atoms(Function) if atom.name == 'T']
-            
-            if not t_calls:
-                non_recursive_terms.append(term)
-                continue
-            
-            # Asumimos una forma a * T(arg)
-            coeff = 1
-            if term.is_Mul:
-                coeffs = [c for c in term.args if c.is_Number]
-                if coeffs: coeff = coeffs[0]
-            
-            a += coeff
-            target_args.add(t_calls[0].args[0])
-
-        # f(n) es el costo resto
-        f_n = Add(*non_recursive_terms) if non_recursive_terms else Integer(0)
-        
-        if a == 0: return {"complexity": expr, "details": None} # Es iterativo
-        
-        # Si hay múltiples argumentos diferentes (ej: n-1 y n-2), usar Ecuación Característica
-        if len(target_args) > 1:
-             return self._solve_characteristic_equation(terms)
-
-        target_arg = list(target_args)[0]
-        
-        # --- DETECCIÓN MATEMÁTICA DEL PATRÓN ---
-        
-        # Prueba 1: ¿Es resta? (Hanoi, Fibonacci linealizado)
-        # Verificamos si (n - argumento) es una constante positiva
-        diff = simplify(self.n - target_arg)
-        if diff.is_constant() and diff > 0:
-            k = diff
-            # Regla de apuntes:
-            # Si a > 1 (ej: 2) -> Exponencial a^(n/k)
-            if a > 1: 
-                res = Pow(a, self.n / k)
-                return {"complexity": res, "details": {"type": "linear_recurrence", "subtype": "exponential", "a": str(a), "k": str(k)}}
-            # Si a = 1 -> Polinomial n * f(n)
-            res = self.n * f_n
-            return {"complexity": res, "details": {"type": "linear_recurrence", "subtype": "polynomial", "a": str(a), "f_n": str(f_n)}}
-
-        # Prueba 2: ¿Es división? (MergeSort, Binaria)
-        # Verificamos si (n / argumento) es una constante positiva > 1
-        ratio = simplify(self.n / target_arg)
-        if ratio.is_constant() and ratio > 1:
-            b = ratio
-            return self._master_theorem(a, b, f_n)
-
-        # Prueba 3: Ecuación Característica (Fibonacci, Linear Homogeneous)
-        # Buscamos patrón: T(n) = c1*T(n-1) + c2*T(n-2) + ...
-        # Recolectamos todos los términos T(n-k)
-        if str(expr).count("T") > 1:
-            return self._solve_characteristic_equation(terms)
-
-        return {"complexity": expr, "details": None}
 
     def _clean_expression(self, expr):
-        """Elimina Max() quedándose con la rama recursiva."""
-        if isinstance(expr, Max):
-            # Prioridad: argumento con T
-            for arg in expr.args:
-                if arg.has(self.T): return self._clean_expression(arg)
-            return self._clean_expression(expr.args[0])
+        """
+        Cleans the expression to prioritize T(n) terms and remove unnecessary artifacts.
+        """
+        if expr is None: return 0
         
-        if expr.is_Add or expr.is_Mul:
-            new_args = [self._clean_expression(arg) for arg in expr.args]
-            return expr.func(*new_args)
+        # If it's a Max, prioritize the term with T
+        if isinstance(expr, Max):
+            # Check if any arg has T
+            has_T = [arg for arg in expr.args if arg.has(self.T)]
+            if has_T:
+                # If multiple T terms, take the one with largest argument? 
+                # For now, just take the first one found, or sum them?
+                # Usually Max(T(n-1), T(n-2)) -> T(n-1) + T(n-2) for complexity? 
+                # No, Max is Max. But for worst case analysis of branching, we usually sum them if we don't know?
+                # But here we are cleaning for display/calculation.
+                # Let's return the first T term found.
+                return self._clean_expression(has_T[0])
+            else:
+                # If no T, return the max of args (simplified)
+                return self._clean_expression(expr.args[0]) # Fallback
+        
+        if hasattr(expr, 'args') and expr.args:
+            # If it's a function call T(...), keep it
+            if isinstance(expr, Function) and expr.name == 'T':
+                return expr
+            
+            # If it's a Sum, keep it
+            if isinstance(expr, Sum):
+                return expr
+                
+            # Recursively clean args
+            # But be careful not to break structure
+            # For Add/Mul, we might want to filter?
+            pass
+
         return expr
 
     def get_recursive_part(self, expr):
         """Extracts the recursive branch from a Max expression."""
         if isinstance(expr, Max):
-            # Return the argument that contains T
             for arg in expr.args:
                 if arg.has(self.T): return self.get_recursive_part(arg)
-            # If neither has T (unlikely if we are here), return the first one or max
             return expr
         
         if expr.is_Add:
-            # For addition, we want to keep the parts that are recursive OR constant overhead associated with it
-            # But strictly speaking, if we have Max(Recursive, Base) + Overhead, 
-            # the recursive part is Recursive + Overhead.
-            # However, simpler approach: clean the expression using _clean_expression logic which already favors T
             return self._clean_expression(expr)
             
         return expr
@@ -133,18 +60,12 @@ class MathEngine:
     def get_base_part(self, expr):
         """Extracts the base case cost (non-recursive branch) from a Max expression."""
         if isinstance(expr, Max):
-            # Return the argument that DOES NOT contain T
-            # If multiple, take the max of them? Usually one is recursive, one is base.
             non_recursive_args = [arg for arg in expr.args if not arg.has(self.T)]
             if non_recursive_args:
                 return Max(*non_recursive_args)
-            
-            # If all have T, then there is no base case path in this Max?
-            return Integer(0)
+            return 0
         
         if expr.is_Add:
-            # If we have A + B, and A has Max(Rec, Base), then Base part is Base + B
-            # We need to traverse and replace Max(Rec, Base) with Base.
             new_args = [self.get_base_part(arg) for arg in expr.args]
             return Add(*new_args)
             
@@ -152,13 +73,96 @@ class MathEngine:
             new_args = [self.get_base_part(arg) for arg in expr.args]
             return Mul(*new_args)
             
-        # If it's a T(n) call, it contributes 0 to the base case cost? 
-        # Or should we say the base case implies T(n) is not called?
-        # If we are evaluating the cost of the base case path, T(n) should not be there.
         if expr.has(self.T):
-            return Integer(0)
+            return 0
             
         return expr
+
+    def solve_recurrence(self, total_cost):
+        """
+        Analyzes the total cost expression to determine complexity.
+        """
+        # 1. Extract terms
+        # Assume total_cost is like T(n/b) + f(n) or T(n-1) + ...
+        
+        # Convert to string to check pattern? Or use SymPy structure.
+        # Let's try to identify if it fits Master Theorem or Linear Recurrence.
+        
+        # Linear Recurrence: T(n) = c1*T(n-1) + ...
+        # Master Theorem: T(n) = a*T(n/b) + f(n)
+        
+        terms = total_cost.as_ordered_terms() if hasattr(total_cost, 'as_ordered_terms') else [total_cost]
+        
+        # Check for Master Theorem pattern
+        a = 0
+        b = 0
+        f_n = 0
+        
+        is_master = False
+        is_linear = False
+        
+        # Helper to find T terms
+        t_terms = []
+        other_terms = []
+        
+        for term in terms:
+            if term.has(self.T):
+                t_terms.append(term)
+            else:
+                other_terms.append(term)
+        
+        f_n = Add(*other_terms)
+        
+        if not t_terms:
+            # No recursion?
+            return {"complexity": f_n, "details": {"type": "iterative"}}
+
+        # Analyze T terms
+        # Check for T(n/b)
+        for term in t_terms:
+            # term could be 2*T(n/2)
+            coeff = 1
+            if term.is_Mul:
+                coeffs = [c for c in term.args if c.is_Number]
+                if coeffs: coeff = coeffs[0]
+                
+            # Find the T function
+            t_funcs = [atom for atom in term.atoms(Function) if atom.name == 'T']
+            if t_funcs:
+                t_func = t_funcs[0]
+                arg = t_func.args[0]
+                
+                # Check arg pattern
+                # n/b
+                if arg.is_Mul or arg.is_Pow: # n/2 is n * 1/2
+                    # Check if it is n * const
+                    wild_b = symbols('b', cls=Wild)
+                    # match = arg.match(self.n / wild_b) # SymPy match is tricky
+                    
+                    # Manual check
+                    # arg = n * (1/b)
+                    ratio = simplify(self.n / arg)
+                    if ratio.is_constant() and ratio > 1:
+                        b = ratio
+                        a += coeff
+                        is_master = True
+                
+                # n-k
+                diff = simplify(self.n - arg)
+                if diff.is_constant() and diff > 0:
+                    is_linear = True
+                    # We collect these for characteristic equation
+        
+        if is_master and not is_linear:
+            return self._master_theorem(a, b, f_n)
+            
+        if is_linear:
+            # Use characteristic equation solver
+            # We need to pass the full list of terms that equal T(n) (conceptually T(n) - terms = 0)
+            # But here 'terms' are the RHS of T(n) = ...
+            return self._solve_characteristic_equation(t_terms)
+
+        return {"complexity": total_cost, "details": {"type": "unknown"}}
 
     def _master_theorem(self, a, b, f_n):
         try:
@@ -242,9 +246,6 @@ class MathEngine:
             r = symbols('r')
             
             # Polinomio: r^max_lag - sum(coeff * r^(max_lag - lag))
-            # Nota: Los términos en 'terms' son positivos en la ecuación T(n) = ...
-            # Por lo tanto, en la ecuación característica r^k = ..., los signos se mantienen.
-            
             poly = r**max_lag
             for lag, coeff in coeffs.items():
                 poly -= coeff * r**(max_lag - lag)
@@ -253,12 +254,11 @@ class MathEngine:
             poly_roots = roots(poly)
             print(f"DEBUG: Roots found: {poly_roots}")
             
-            # Encontrar la raíz dominante (mayor valor absoluto)
+            # Encontrar la raíz dominante
             max_root = 0
             max_abs_val = -1
             
             for root in poly_roots:
-                # Aproximación numérica para comparación
                 try:
                     val = root.evalf()
                     abs_val = abs(complex(val))
@@ -271,29 +271,26 @@ class MathEngine:
             
             print(f"DEBUG: Max root: {max_root}")
             
-            # Construir la complejidad final
-            # O(root^n)
-            # Para Fibonacci, max_root es (1+sqrt(5))/2 approx 1.618
-            big_o = O(max_root**self.n, (self.n, oo))
-            res_str = str(big_o)
+            # Detectar Golden Ratio
+            if "sqrt(5)" in str(max_root):
+                res_str = "Θ(1.618^n)"
+            else:
+                big_o = O(max_root**self.n, (self.n, oo))
+                res_str = str(big_o)
+                
+                res_str = res_str.replace(", (n, oo)", "")
+                res_str = res_str.replace("O(", "Θ(")
+                res_str = res_str.replace("**", "^")
+                res_str = res_str.replace("log(1/n)", "log(n)") 
+                res_str = res_str.replace("log(n)/log(2)", "log n")
             
-            # Limpieza básica
-            res_str = res_str.replace(", (n, oo)", "")
-            res_str = res_str.replace("O(", "Θ(")
-            res_str = res_str.replace("**", "^")
-            res_str = res_str.replace("log(1/n)", "log(n)") 
-            res_str = res_str.replace("log(n)/log(2)", "log n")
-            
-            # Limpieza de Exponenciales (exp(k*n) -> base^n)
+            # Limpieza de Exponenciales
             if "exp(" in res_str:
-                # Busca exp( numeritos * n * log(base) ) o variaciones
-                # Caso Hanoi: exp(1.0*n*log(2))
                 match_log = re.search(r'exp\((?:[0-9\.]+\*)?n\*log\(([0-9]+)\)\)', res_str)
                 if match_log:
                     base = match_log.group(1)
                     res_str = f"Θ({base}^n)"
                 
-                # Caso Genérico: exp(0.693*n) -> e^0.693 = 2
                 match_num = re.search(r'exp\(([0-9\.]+)\*n\)', res_str)
                 if match_num:
                     val = float(match_num.group(1))
@@ -312,31 +309,25 @@ class MathEngine:
             }
         except Exception as e: 
             print(f"DEBUG: Error in characteristic equation: {e}")
-            return "Unknown Recurrence"
+            return {"complexity": "Unknown Recurrence", "details": None}
 
-    def format_complexity(self, complexity):
+    def format_complexity(self, complexity, use_theta=True):
         """Formatea la complejidad para que sea legible."""
-        # Intenta simplificar a Big-O si es una expresión matemática compleja
         try:
             if hasattr(complexity, 'free_symbols') and self.n in complexity.free_symbols:
-                 # Calcular Big-O
                  big_o = O(complexity, (self.n, oo))
                  complexity = big_o
         except: pass
 
         s = str(complexity)
         
-        # Limpieza de Big-O de SymPy
         s = s.replace(", (n, oo)", "")
-        s = s.replace("O(", "Theta(")
-        s = s.replace("Θ(", "Theta(") # Unificar a ASCII
+        s = s.replace("O(", "Theta(") if use_theta else s
+        s = s.replace("Θ(", "Theta(") 
 
-        # Limpieza de logaritmos
         s = s.replace("log(n)/log(2)", "log n")
         s = s.replace("log(n)", "log n")
         
-        # Limpieza de Exponenciales complejos: exp(n*log(X)) -> X^n
-        # Busca exp(n*log(CualquierCosa))
         match_exp = re.search(r'exp\(n\s*\*\s*log\((.+?)\)\)', s)
         if match_exp:
             base = match_exp.group(1)
@@ -344,7 +335,6 @@ class MathEngine:
             s = s.replace(match_exp.group(0), f"({base})^n")
 
         # Reemplazo de Phi (Numero Aureo)
-        # Variaciones comunes de SymPy
         s = s.replace("1/2 + sqrt(5)/2", "φ")
         s = s.replace("(1 + sqrt(5))/2", "φ")
         s = s.replace("sqrt(5)/2 + 1/2", "φ")
@@ -362,22 +352,15 @@ class MathEngine:
         while "  " in s: s = s.replace("  ", " ")
         s = s.strip()
         
-        # Caso Theta
+        # Caso Theta / O
         if "Theta" not in s and "O(" not in s:
-            return f"Theta({s})"
+            return f"Theta({s})" if use_theta else f"O({s})"
             
         return s
 
     def explain_recurrence(self, complexity_data, recurrence_eq_str):
         """
         Generates a didactic explanation for the solved recurrence.
-        
-        Args:
-            complexity_data (dict): The result from solve_recurrence.
-            recurrence_eq_str (str): The raw equation string (e.g. "T(n) = 2*T(n/2) + n").
-            
-        Returns:
-            str: A markdown string with the explanation.
         """
         if not isinstance(complexity_data, dict):
             return "No explanation available for this complexity."
@@ -494,12 +477,6 @@ class MathEngine:
     def explain_iterative(self, complexity_expr):
         """
         Generates a didactic explanation for iterative algorithms (loops).
-        
-        Args:
-            complexity_expr: The sympy expression representing the total cost.
-            
-        Returns:
-            str: A markdown string with the explanation.
         """
         explanation = []
         explanation.append(f"### Análisis Iterativo\n")
@@ -540,3 +517,18 @@ class MathEngine:
         explanation.append(f"La complejidad asintótica es **{self.format_complexity(complexity_expr)}**.")
         
         return "\n".join(explanation)
+
+    def sum_loop(self, body_cost, var, start, end):
+        """
+        Calculates the summation of body_cost from start to end.
+        """
+        # Ensure symbols are correct
+        # var is string, convert to symbol
+        k = symbols(var, integer=True)
+        
+        # body_cost might contain k
+        # If body_cost is Integer or constant, sum is count * body
+        
+        # We use SymPy Sum
+        s = Sum(body_cost, (k, start, end))
+        return s

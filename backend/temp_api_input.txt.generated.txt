@@ -1,14 +1,21 @@
-Hanoi(n)
+Fibonacci(n)
 begin
+    // Caso base para F(0)
     If (n = 0) then
     begin
         return 0;
     end
     else
     begin
-        // Mueve n-1 discos de la torre origen a la auxiliar
-        // Mueve el disco n de la torre origen a la destino
-        // Mueve n-1 discos de la torre auxiliar a la destino
-        return Hanoi(n - 1) + 1 + Hanoi(n - 1);
+        // Caso base para F(1)
+        If (n = 1) then
+        begin
+            return 1;
+        end
+        else
+        begin
+            // Paso recursivo para F(n) = F(n-1) + F(n-2)
+            return Fibonacci(n - 1) + Fibonacci(n - 2);
+        end;
     end;
 end;

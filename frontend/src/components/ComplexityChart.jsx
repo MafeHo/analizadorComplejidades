@@ -10,6 +10,10 @@ const ComplexityChart = ({ complexity }) => {
             let val = n;
             if (c_lower.includes("2^n") || c_lower.includes("2**n") || c_lower.includes("exponencial")) {
                 val = Math.pow(2, n);
+            } else if (c_lower.includes("phi^n") || c_lower.includes("φ^n") || c_lower.includes("1.618^n")) {
+                val = Math.pow(1.618, n);
+            } else if (c_lower.includes("n^3")) {
+                val = Math.pow(n, 3);
             } else if (c_lower.includes("n^2")) {
                 val = Math.pow(n, 2);
             } else if (c_lower.includes("nlog")) {
@@ -30,7 +34,8 @@ const ComplexityChart = ({ complexity }) => {
     // Determine color based on complexity
     let color = '#DAF7A6'; // Linear
     const c_lower = complexity.toLowerCase();
-    if (c_lower.includes("2^n") || c_lower.includes("exponencial")) color = '#FF33A8';
+    if (c_lower.includes("2^n") || c_lower.includes("exponencial") || c_lower.includes("phi^n") || c_lower.includes("φ^n") || c_lower.includes("1.618^n")) color = '#FF33A8';
+    else if (c_lower.includes("n^3")) color = '#C70039';
     else if (c_lower.includes("n^2")) color = '#FF5733';
     else if (c_lower.includes("nlog")) color = '#33FF57';
     else if (c_lower.includes("log")) color = '#33C1FF';
